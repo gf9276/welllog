@@ -1,0 +1,7 @@
+/Data/
+/Log/
+/.idea/
+
+!/Data/.gitignore
+!/Log/Train/.gitignore
+!/Log/Predict/.gitignore
