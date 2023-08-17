@@ -7,21 +7,6 @@ from torch.utils.data import DataLoader
 from torch.utils.data import Dataset
 
 
-def transform_label(label, transform_dict):
-    """
-    将标签转换一下罢了
-    """
-    label = copy.deepcopy(label)  # 遇事不决, copy一下
-    # 先获取所有种类对应的mask
-    mask = {}
-    for key in transform_dict.keys():
-        mask[key] = (label == int(key))
-    # 再根据mask一一替换
-    for key in transform_dict.keys():
-        label[mask[key]] = transform_dict[key]
-    return label
-
-
 class MyDataSet(Dataset):
     def __init__(self, h5filepath: str, label_classes: list, which_wells=None, noise=False):
         """
@@ -31,14 +16,10 @@ class MyDataSet(Dataset):
         """
 
         # a-->b b-->a
-        self.label_classes = [int(float(x)) for x in label_classes]  # 先float再int当然是为了保险。。。
-        self.label_classes_dict = dict(zip(self.label_classes, list(range(len(self.label_classes)))))
-        self.label_classes_reversal_dict = dict(zip(list(range(len(self.label_classes))), self.label_classes))
         self.h5filepath = h5filepath
         self.noise = noise
         self.have_label = True
 
-        self.label_classes_nbr = len(self.label_classes_dict)  # 标签数量
 
         # 直接全部加载到内存里，其实可以在__getitem__里面重新打开文件，会不会起冲突我就不知道了，没试过
         self.dataset = {}
@@ -60,8 +41,8 @@ class MyDataSet(Dataset):
             # 按照float32的格式读取
             all_well_features.append(self.features_h5file[well_name]["features"][:].astype("float32"))
             if "label" in self.features_h5file[well_name].keys() and "multi_label" in self.features_h5file[well_name].keys():
-                all_well_label.append(self.features_h5file[well_name]["label"][:].astype("int64"))
-                all_well_multi_label.append(self.features_h5file[well_name]["multi_label"][:].astype("int64"))
+                all_well_label.append(self.features_h5file[well_name]["label"][:].astype("float32"))
+                all_well_multi_label.append(self.features_h5file[well_name]["multi_label"][:].astype("float32"))
                 self.have_label = True
             else:
                 self.have_label = False
@@ -69,10 +50,8 @@ class MyDataSet(Dataset):
         self.features_h5file.close()
 
         self.dataset["features"] = np.concatenate(tuple(all_well_features), 0)
-        if self.have_label:
-            # 转成我们要的数字
-            self.dataset["label"] = transform_label(np.concatenate(tuple(all_well_label), 0), self.label_classes_dict)
-            self.dataset["multi_label"] = transform_label(np.concatenate(tuple(all_well_multi_label), 0), self.label_classes_dict)
+        self.dataset["label"] = np.concatenate(tuple(all_well_label), 0)
+        self.dataset["multi_label"] = np.concatenate(tuple(all_well_multi_label), 0)
 
         self.features_nbr = self.dataset["features"].shape[2]
         self.slice_length = self.dataset["features"].shape[1]
@@ -117,48 +96,6 @@ class MyDataSet(Dataset):
             else:
                 well_idx -= self.wells_size[i]
 
-        return output
-
-    def remove_overlap(self, total_label):
-        """
-        """
-        output = []
-
-        # 针对每一个井，进行一次标签解析，这样可以防止交叉处的问题
-        last_idx = 0
-        for i in range(len(self.wells_size)):
-            cur_well_total_label = total_label[last_idx:last_idx + self.wells_size[i] * self.slice_length]
-            output.append(self.remove_overlap_in_well(cur_well_total_label))
-            last_idx = last_idx + self.wells_size[i] * self.slice_length
-
-        return torch.cat(tuple(output), dim=0)
-
-    def remove_overlap_in_well(self, total_label):
-        """
-        total_label：n, 97 -- > 拼接成n*97 后的内容
-        必须是同一口井，必须是按照深度顺序的
-        :return:
-        """
-        slice_nbr = int(len(total_label) / self.slice_length)  # 切片数，其实就是数据集的数据
-        depth_point_nbr = int(self.slice_step * slice_nbr + self.slice_length)  # 深度点个数就是切片数量+最后面的切片
-
-        voting_matrix = torch.zeros([depth_point_nbr, self.label_classes_nbr], dtype=torch.float32)  # 准备开始计数，投票矩阵
-        voting_matrix = voting_matrix.to(total_label.device)
-
-        for i in range(slice_nbr):
-            cur_label = total_label[i * self.slice_length:(i + 1) * self.slice_length]  # 当前的长度为97的label
-
-            score = voting_matrix[i * self.slice_step:i * self.slice_step + self.slice_length].gather(1, cur_label.unsqueeze(1))
-            score += 1
-
-            # scatter_就是inplace，而scatter则不会
-            voting_matrix[i * self.slice_step:i * self.slice_step + self.slice_length].scatter_(1, cur_label.unsqueeze(1), score)
-            # voting_matrix[i * self.slice_step:i * self.slice_step + self.slice_length] = torch.scatter(
-            #     voting_matrix[i * self.slice_step:i * self.slice_step + self.slice_length], 1, cur_label.unsqueeze(1), score)
-
-            pass  # 用来打断点的
-
-        output = voting_matrix.argmax(1)
         return output
 
 

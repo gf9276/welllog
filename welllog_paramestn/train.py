@@ -5,6 +5,7 @@
 import os
 import sys
 import time
+import math
 from multiprocessing import cpu_count
 
 curPath = os.path.abspath(os.path.dirname(__file__))  # 加入当前路径，直接执行有用
@@ -17,7 +18,6 @@ import torch
 from pathlib import Path
 from evaluate import common_forward, evaluate
 from Utils.common import set_seeds, save_fig
-from Utils.analysis import plt_confusion_matrix
 from MyDataloader.h5_dataloader import setup_dataloaders
 
 
@@ -28,7 +28,7 @@ def parse_args():
     """
     parser = argparse.ArgumentParser(description='Train a model')
     # 模型配置文件
-    parser.add_argument('--config', default="ResNet18_Geology", help='模型的名字')
+    parser.add_argument('--config', default="PlainCNN_ParamEstn", help='模型的名字')
     # 文件和路径相关
     parser.add_argument('--logging_filepath', default="./Log/Train/logging.json", help='日志文件路径')
     parser.add_argument('--model_save_path', default="./Log/Train/output.pth", help='模型文件保存路径')
@@ -64,7 +64,6 @@ def run_epoch(net, train_loader, optimizer, criterion):
         loss.backward()
         optimizer.step()
 
-        eq_nbr += predicted.eq(label).sum().item()  # 记录标签准确数量
         total_loss.append(loss.item())  # 记录损失函数
 
         if batch_idx % print_period == 0:
@@ -74,10 +73,10 @@ def run_epoch(net, train_loader, optimizer, criterion):
                 batch_idx, len(train_loader),
                 label_nbr, len(train_loader.dataset),
                 sum(total_loss) / len(total_loss),
-                100 * eq_nbr / label_nbr,
+                100 * math.exp(-sum(total_loss) / len(total_loss)),
                 label_nbr / use_time))
 
-    return eq_nbr / label_nbr, sum(total_loss) / len(total_loss)
+    return math.exp(-sum(total_loss) / len(total_loss)), sum(total_loss) / len(total_loss)
 
 
 def eval_val(net, val_loader, criterion):
@@ -167,10 +166,7 @@ def main(args):
             print('save model')
             torch.save(net.state_dict(), model_save_path)  # 转到cpu，再保存参数
             if draw_plt == "True":
-                plt_confusion_matrix(all_predicted,
-                                     all_label,
-                                     label_classes,
-                                     save_path=str(Path(log_dir) / "confusion_matrix.png"))
+                pass
 
         # 保存json和图片
         with open(logging_filepath, "w") as f:

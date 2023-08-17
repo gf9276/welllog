@@ -16,7 +16,7 @@ from Utils.common import set_seeds, sample_to_device
 from Utils.analysis import plt_confusion_matrix
 from MyDataloader.h5_dataloader import setup_dataloaders, transform_label
 from evaluate import evaluate
-from Utils.math import median_filter_in_torch
+from Utils.math_handler import median_filter_in_torch
 
 
 def parse_args():
