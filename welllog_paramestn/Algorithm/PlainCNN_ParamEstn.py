@@ -76,7 +76,7 @@ class Net(nn.Module):
         self.fc1 = nn.Linear(conv_layers[-1] * 1, fc_layers[0])
 
         self.fc = make_fclayers(fc_layers)
-        self.cls = nn.Linear(fc_layers[-1], label_num)
+        self.cls = nn.Linear(fc_layers[-1], 1)
 
     def forward(self, x):
         x = self.conv_layer(x)
