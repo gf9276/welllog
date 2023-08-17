@@ -15,7 +15,6 @@ from pathlib import Path
 from Utils.common import set_seeds, sample_to_device
 from MyDataloader.h5_dataloader import setup_dataloaders
 from evaluate import evaluate
-from Utils.math_handler import median_filter_in_torch
 
 
 def parse_args():
