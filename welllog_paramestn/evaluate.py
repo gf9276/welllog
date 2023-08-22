@@ -5,6 +5,7 @@ import math
 
 import torch
 from Utils.common import sample_to_device
+from torchmetrics.functional.regression import r2_score
 
 
 def common_forward(net, batch, criterion):
@@ -58,4 +59,4 @@ def evaluate(net, test_loader, criterion):
         all_label = torch.cat(tuple(all_label), dim=0)
         all_predicted = torch.cat(tuple(all_predicted), dim=0)
 
-    return math.exp(-sum(total_loss) / len(total_loss)), sum(total_loss) / len(total_loss), all_label, all_predicted
+    return r2_score(all_predicted, all_label).item(), sum(total_loss) / len(total_loss), all_label, all_predicted

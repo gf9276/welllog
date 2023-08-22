@@ -1,12 +1,10 @@
 import torch
 import torch.nn as nn
 
-from welllog_paramestn.Utils.loss_func import *
-
 # training config
 slicelength = 97
-epoch = 20
-batchsize = 256
+epoch = 1
+batchsize = 64
 learningrate = 0.01
 lossfunc = 0
 
@@ -26,7 +24,7 @@ conv_layers = convlayers
 label_classes = label
 label_num = len(label_classes)
 batch_size = batchsize
-loss_dict = {0: rmse_loss, 1: rmse_loss}  # 为了兼容命令,暂时保留1
+loss_dict = {0: torch.nn.MSELoss(), 1: torch.nn.MSELoss()}  # 为了兼容命令,暂时保留1
 loss_func_idx = lossfunc
 learning_rate = learningrate
 

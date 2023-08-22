@@ -8,6 +8,8 @@ import time
 import math
 from multiprocessing import cpu_count
 
+from torchmetrics.functional import r2_score
+
 curPath = os.path.abspath(os.path.dirname(__file__))  # 加入当前路径，直接执行有用
 rootPath = os.path.split(curPath)[0]
 sys.path.append(rootPath)
@@ -53,6 +55,8 @@ def run_epoch(net, train_loader, optimizer, criterion):
     cur_device = next(net.parameters()).device
     print_period = 10
     start = time.time()
+    all_label = []
+    all_predicted = []
 
     for batch_idx, batch in enumerate(train_loader):
         net.zero_grad()
@@ -65,6 +69,8 @@ def run_epoch(net, train_loader, optimizer, criterion):
         optimizer.step()
 
         total_loss.append(loss.item())  # 记录损失函数
+        all_label.append(label.clone().detach())
+        all_predicted.append(predicted.clone().detach())
 
         if batch_idx % print_period == 0:
             use_time = time.time() - start
@@ -73,10 +79,13 @@ def run_epoch(net, train_loader, optimizer, criterion):
                 batch_idx, len(train_loader),
                 label_nbr, len(train_loader.dataset),
                 sum(total_loss) / len(total_loss),
-                100 * math.exp(-sum(total_loss) / len(total_loss)),
+                r2_score(torch.cat(tuple(all_predicted), dim=0), torch.cat(tuple(all_label), dim=0)).item() * 100,
                 label_nbr / use_time))
 
-    return math.exp(-sum(total_loss) / len(total_loss)), sum(total_loss) / len(total_loss)
+    all_label = torch.cat(tuple(all_label), dim=0)
+    all_predicted = torch.cat(tuple(all_predicted), dim=0)
+
+    return r2_score(all_predicted, all_label).item(), sum(total_loss) / len(total_loss)
 
 
 def eval_val(net, val_loader, criterion):
