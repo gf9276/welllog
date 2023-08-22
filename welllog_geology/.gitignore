@@ -2,6 +2,7 @@
 /Log/Train/*
 /Log/Predict/*
 /.idea/
+/__pycache__/
 
 !/Data/*.gitignore
 !/Log/Train/*.gitignore
