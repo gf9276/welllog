@@ -15,12 +15,13 @@ from pathlib import Path
 from Utils.common import set_seeds, sample_to_device
 from MyDataloader.h5_dataloader import setup_dataloaders
 from evaluate import evaluate
+from Utils.reverse_preprocessing import reverse_preproc
 
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Test a model')
     # 文件和路径相关
-    parser.add_argument('--config', default='PlainCNN_ParamEstn', help='模型配置文件路径')
+    parser.add_argument('--config', default='SENet_ParamEstn', help='模型配置文件路径')
     parser.add_argument('--logging_filepath', default='./Log/Predict/logging.json', help='保存结果的json')
     parser.add_argument('--test_filepath', default='./Data/test.h5', help='测试集路径')
     parser.add_argument('--checkpoint', default='./Log/Train/output.pth', help='模型权重路径')
@@ -118,6 +119,8 @@ def main(args):
             all_predicted = predict(net, test_loader)
             print("well name: {} --> 预测完成".format(well_name))
 
+        # 转回预测值
+        all_predicted = reverse_preproc(test_dataset.proc_info, test_dataset.label_name, all_predicted)
         result_dict[well_name] = [str(x) for x in all_predicted.cpu().numpy().tolist()]  # 他们要的数字是字符串格式的
         with open(logging_filepath, "w") as f:
             json.dump(result_dict, f, indent=2)

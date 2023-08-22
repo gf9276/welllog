@@ -396,6 +396,10 @@ class WellDatasetCtrls:
                                 merged_dataset[well_name][:, key_idx][outlier_idx] = 1
                             merged_dataset[well_name][:, key_idx] = np.log10(merged_dataset[well_name][:, key_idx])
 
+                    if key_idx == len(self.features_name):
+                        # 标签异常值会在后面剔除的，不是在这里
+                        merged_dataset[well_name][:, key_idx][outlier_idx] = -99999
+
         return merged_dataset, merged_dataset_outlier
 
     def slice_a_well_dataset(self, merged_dataset, merged_dataset_outlier, well_name):
@@ -605,6 +609,8 @@ class WellDatasetCtrls:
         with h5py.File(h5_filepath, 'w') as h5_file:
             h5_file.attrs["slice_length"] = self.slice_length
             h5_file.attrs["slice_step"] = self.slice_step
+            h5_file.attrs["proc_info"] = json.dumps(self.proc_info)
+            h5_file.attrs["label_name"] = self.label_name
 
         # 保存数据
         for i in sliced_dataset[list(sliced_dataset.keys())[0]].keys():

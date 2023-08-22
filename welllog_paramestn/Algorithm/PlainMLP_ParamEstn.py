@@ -1,6 +1,8 @@
 import torch
 import torch.nn as nn
 
+from Utils.loss_func import rmse_loss
+
 # training config
 slicelength = None
 epoch = None
@@ -22,7 +24,7 @@ fc_layers = fclayers
 label_classes = label
 label_num = len(label_classes)
 batch_size = batchsize
-loss_dict = {0: torch.nn.MSELoss(), 1: torch.nn.MSELoss()}  # 为了兼容命令,暂时保留1
+loss_dict = {0: rmse_loss, 1: rmse_loss}  # 为了兼容命令,暂时保留1
 loss_func_idx = lossfunc
 learning_rate = learningrate
 

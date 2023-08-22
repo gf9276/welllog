@@ -30,7 +30,7 @@ def parse_args():
     """
     parser = argparse.ArgumentParser(description='Train a model')
     # 模型配置文件
-    parser.add_argument('--config', default="PlainCNN_ParamEstn", help='模型的名字')
+    parser.add_argument('--config', default="SENet_ParamEstn", help='模型的名字')
     # 文件和路径相关
     parser.add_argument('--logging_filepath', default="./Log/Train/logging.json", help='日志文件路径')
     parser.add_argument('--model_save_path', default="./Log/Train/output.pth", help='模型文件保存路径')

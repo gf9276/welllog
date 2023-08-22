@@ -1,5 +1,5 @@
+import json
 import random
-import copy
 import h5py
 import numpy as np
 import torch
@@ -20,7 +20,6 @@ class MyDataSet(Dataset):
         self.noise = noise
         self.have_label = True
 
-
         # 直接全部加载到内存里，其实可以在__getitem__里面重新打开文件，会不会起冲突我就不知道了，没试过
         self.dataset = {}
         self.wells_name = []  # 保存井次信息 --> 必须list，python里的dict貌似没有顺序，新版本可能有
@@ -29,6 +28,9 @@ class MyDataSet(Dataset):
         self.features_h5file = h5py.File(h5filepath, "r")
         self.slice_length = self.features_h5file.attrs["slice_length"]
         self.slice_step = self.features_h5file.attrs["slice_step"]
+        self.proc_info = json.loads(self.features_h5file.attrs["proc_info"])
+        self.label_name = self.features_h5file.attrs["label_name"]
+
         all_well_features = []
         all_well_label = []
         all_well_multi_label = []

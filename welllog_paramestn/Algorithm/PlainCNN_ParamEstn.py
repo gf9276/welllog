@@ -1,17 +1,17 @@
 import torch
 import torch.nn as nn
 
-from welllog_paramestn.Utils.loss_func import *
+from Utils.loss_func import rmse_loss
 
 # training config
 slicelength = 97
-epoch = 20
-batchsize = 256
+epoch = 200
+batchsize = 4096
 learningrate = 0.01
 lossfunc = 0
 
 # network config
-featurenum = 6
+featurenum = 5
 convlayers = [32, 36, 56]
 fclayers = [256, 512]
 label = [None]
