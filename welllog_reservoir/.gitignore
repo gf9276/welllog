@@ -1,7 +1,7 @@
 /Data/*
 /Log/Train/*
 /Log/Predict/*
-/.idea/*
+/.idea/
 
 !/Data/*.gitignore
 !/Log/Train/*.gitignore
