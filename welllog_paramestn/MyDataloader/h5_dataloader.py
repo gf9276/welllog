@@ -52,8 +52,9 @@ class MyDataSet(Dataset):
         self.features_h5file.close()
 
         self.dataset["features"] = np.concatenate(tuple(all_well_features), 0)
-        self.dataset["label"] = np.concatenate(tuple(all_well_label), 0)
-        self.dataset["multi_label"] = np.concatenate(tuple(all_well_multi_label), 0)
+        if self.have_label:
+            self.dataset["label"] = np.concatenate(tuple(all_well_label), 0)
+            self.dataset["multi_label"] = np.concatenate(tuple(all_well_multi_label), 0)
 
         self.features_nbr = self.dataset["features"].shape[2]
         self.slice_length = self.dataset["features"].shape[1]
