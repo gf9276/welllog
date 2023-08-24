@@ -2,7 +2,7 @@
   "tasktype": "4",
   "subtype": "1",
   "algtype": "5",
-  "alginstancename": "SENet_Geology",
+  "alginstancename": "SENet_ParamEstn",
   "alginstancealias": "智能分层_SENet",
   "parameter": [
     {
