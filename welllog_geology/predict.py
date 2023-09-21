@@ -49,11 +49,21 @@ def predict(net, test_loader):
 
     with torch.no_grad():
         for batch_idx, batch in enumerate(test_loader):
-            this_batch = sample_to_device(batch, cur_device)
-            features = torch.swapaxes(this_batch["features"], 1, 2)
-            output = net(features)
-            _, predicted = output.max(1)  # 获取标签
-            all_predicted.append(predicted)
+            if hasattr(net, 'model_type') and net.model_type == "transformer":
+                this_batch = sample_to_device(batch, cur_device)
+                features = this_batch["features"]
+                transformer_batch = net.get_batch(features, None, 926219)
+                output = net.forward(src=transformer_batch.src, src_mask=transformer_batch.src_mask, just_encoder=True)
+                output = output[:, output.shape[1] // 2, :]  # 我懒，直接取中间值得了
+                _, predicted = output.max(1)  # 获取标签
+                all_predicted.append(predicted)
+
+            else:
+                this_batch = sample_to_device(batch, cur_device)
+                features = torch.swapaxes(this_batch["features"], 1, 2)
+                output = net(features)
+                _, predicted = output.max(1)  # 获取标签
+                all_predicted.append(predicted)
 
         all_predicted = torch.cat(tuple(all_predicted), dim=0)
 
@@ -65,11 +75,11 @@ def main(args):
     set_seeds()
     # --------------------O(∩_∩)O-------------- 成功第二步，配置参数 ----------------------------------
     cfg = "Algorithm." + args.config
-    logging_filepath = args.logging_filepath
+    logging_filepath = str(Path(args.logging_filepath))
     log_dir = str(Path(logging_filepath).parent)
     Path(log_dir).mkdir(parents=True, exist_ok=True)
-    test_filepath = args.test_filepath
-    checkpoint = args.checkpoint
+    test_filepath = str(Path(args.test_filepath))
+    checkpoint = str(Path(args.checkpoint))
     draw_plt = args.draw_plt
     gpu_id = args.gpu_id
     median_filter_size = int(args.median_filter_size)
