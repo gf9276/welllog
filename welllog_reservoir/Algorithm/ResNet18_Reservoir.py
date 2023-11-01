@@ -9,9 +9,8 @@ learningrate = 0.02
 lossfunc = 0
 
 # network config
-featurenum = 6
-label = ['34', '19', '3', '4', '25', '2', '1', '0', '23', '35', '32', '33', '31', '30', '28', '29', '26', '27', '22', '21', '12', '13', '14', '15', '16', '17',
-         '18', '24', '11', '20', '5', '6', '7', '8', '9', '10']
+featurenum = 3
+label = ['0', '1']
 
 # -------- Do not delete this line, the configuration ends here. --------
 

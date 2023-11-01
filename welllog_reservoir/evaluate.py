@@ -14,15 +14,29 @@ def common_forward(net, batch, criterion):
     :param criterion:
     :return:
     """
-    cur_device = next(net.parameters()).device
-    this_batch = sample_to_device(batch, cur_device)
-    features = torch.swapaxes(this_batch["features"], 1, 2)
-    label = this_batch["label"].long()
+    if hasattr(net, 'model_type') and net.model_type == "transformer":
+        cur_device = next(net.parameters()).device
+        this_batch = sample_to_device(batch, cur_device)
+        features = this_batch["features"]
+        transformer_batch = net.get_batch(features, None, 926219)
+        label = this_batch["label"].long()
 
-    output = net(features)
-    loss = criterion(output, label)
+        output = net.forward(src=transformer_batch.src, src_mask=transformer_batch.src_mask, just_encoder=True)
+        output = output[:, output.shape[1] // 2, :]  # 我懒，直接取中间值得了
+        loss = criterion(output, label)
 
-    _, predicted = output.max(1)  # 获取标签
+        _, predicted = output.max(1)  # 获取标签
+
+    else:
+        cur_device = next(net.parameters()).device
+        this_batch = sample_to_device(batch, cur_device)
+        features = torch.swapaxes(this_batch["features"], 1, 2)
+        label = this_batch["label"].long()
+
+        output = net(features)
+        loss = criterion(output, label)
+
+        _, predicted = output.max(1)  # 获取标签
 
     return loss, predicted, label
 

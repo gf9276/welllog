@@ -65,11 +65,11 @@ def main(args):
     set_seeds()
     # --------------------O(∩_∩)O-------------- 成功第二步，配置参数 ----------------------------------
     cfg = "Algorithm." + args.config
-    logging_filepath = args.logging_filepath
+    logging_filepath = str(Path(args.logging_filepath))
     log_dir = str(Path(logging_filepath).parent)
     Path(log_dir).mkdir(parents=True, exist_ok=True)
-    test_filepath = args.test_filepath
-    checkpoint = args.checkpoint
+    test_filepath = str(Path(args.test_filepath))
+    checkpoint = str(Path(args.checkpoint))
     draw_plt = args.draw_plt
     gpu_id = args.gpu_id
     median_filter_size = int(args.median_filter_size)
@@ -106,7 +106,7 @@ def main(args):
             test_filepath,
             label_classes,
             batch_size * 8,  # 我已经全速前进了
-            num_workers=cpu_count(),
+            num_workers=3 * cpu_count() // 4,
             shuffle=False,
             which_wells=[well_name])
         if test_dataset.have_label:
