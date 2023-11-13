@@ -8,7 +8,7 @@ import torch.nn.functional as F
 
 # training config
 slicelength = 97
-epoch = 1
+epoch = 20
 batchsize = 256
 learningrate = 0.001
 lossfunc = 0
