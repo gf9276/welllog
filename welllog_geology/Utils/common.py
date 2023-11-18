@@ -82,6 +82,12 @@ def set_seeds(seed=43):
 
 def sample_to_device(data, device="cpu"):
     """
+    将数据放到cuda中的函数
+    :param data: 原始数据
+    :param device: "cuda" 或者 "cpu"
+    :return:
+    """
+    """
     将数据 放到cuda 里
     """
     if isinstance(data, str):
@@ -101,6 +107,13 @@ def sample_to_device(data, device="cpu"):
 
 
 def save_fig(values, title, fig_path):
+    """
+    使用agg而不是默认的qt5agg 进行matplotlib的图像绘制
+    :param values: 值
+    :param title: 图的标题
+    :param fig_path: 保存路径
+    :return: 无返回，直接保存图像
+    """
     # 使用agg而不是默认的qt5agg
     import matplotlib
     matplotlib.use("Agg")

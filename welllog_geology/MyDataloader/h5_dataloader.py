@@ -9,7 +9,10 @@ from torch.utils.data import Dataset
 
 def transform_label(label, transform_dict):
     """
-    将标签转换一下罢了
+    将原始的label根据transform_dict里的对应关系，一一转化
+    @param label: list, 原始标签
+    @param transform_dict: 标签转换的对应字典
+    @return: 转换完了的标签
     """
     label = copy.deepcopy(label)  # 遇事不决, copy一下
     # 先获取所有种类对应的mask
@@ -25,10 +28,16 @@ def transform_label(label, transform_dict):
 class MyDataSet(Dataset):
     def __init__(self, h5filepath: str, label_classes: list, which_wells=None, noise=False):
         """
-        label_classes: 比如{'3', '5', '1', '0', '6', '4', '2', '-99999'}
-        label_classes_dict: 比如 {3: 0, 5: 1, 1: 2, 0: 3, 6: 4, 4: 5, 2: 6, -99999: 7}
-        注意string和int的变化
+        继承于Dataset类，读取.h5数据集并提供__getitem__函数以及一系列的对应处理操作
+        @param h5filepath: .h5数据集的路径
+        @param label_classes: 比如{'3', '5', '1', '0', '6', '4', '2', '-99999'}
+        @param which_wells: 指定哪一口井
+        @param noise: 是否添加噪声？
         """
+
+        # label_classes: 比如{'3', '5', '1', '0', '6', '4', '2', '-99999'}
+        # label_classes_dict: 比如 {3: 0, 5: 1, 1: 2, 0: 3, 6: 4, 4: 5, 2: 6, -99999: 7}
+        # 注意string和int的变化
 
         # a-->b b-->a
         self.label_classes = [int(float(x)) for x in label_classes]  # 先float再int当然是为了保险。。。
@@ -169,6 +178,17 @@ def setup_dataloaders(h5filepath: str,
                       shuffle=True,
                       which_wells=None,
                       noise=False):
+    """
+    提供用于训练、验证以及预测的数据集
+    :param h5filepath: .h5数据集文件的路径
+    :param label_classes: 标签的类别，比如{'3', '5', '1', '0', '6', '4', '2', '-99999'}
+    :param batch_size: 训练过程中的批大小
+    :param num_workers: 使用多少个cpu进程进行数据读取
+    :param shuffle: 是否打乱数据集
+    :param which_wells: 选择哪些井
+    :param noise: 是否添加噪声
+    :return: loader: DataLoader类，供pytorch训练网络使用
+    """
     """
     Prepare datasets for training, validation and test.
     """

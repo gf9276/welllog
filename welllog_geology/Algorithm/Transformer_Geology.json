@@ -1,7 +1,7 @@
 {
   "tasktype": "0",
   "subtype": "0",
-  "algtype": "5",
+  "algtype": "8",
   "alginstancealias": "智能分层_Transformer",
   "parameter": [
     {

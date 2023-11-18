@@ -37,11 +37,24 @@ def parse_args():
 
 
 def eval_test(net, test_loader, criterion):
+    """
+    对测试集进行评估
+    :param net: 网络 nn.module类
+    :param test_loader: 测试集的dataloader对象
+    :param criterion: 损失函数
+    :return: 准确率 损失函数 预测值
+    """
     test_acc, test_loss, all_label, all_predicted = evaluate(net, test_loader, criterion)
     return test_acc, test_loss, all_label, all_predicted
 
 
 def predict(net, test_loader):
+    """
+    对测试集进行预测
+    :param net: 网络 nn.module类
+    :param test_loader: 测试集的dataloader对象
+    :return: 预测值
+    """
     net.eval()  # 很重要
     net.training = False
     cur_device = next(net.parameters()).device
@@ -71,6 +84,11 @@ def predict(net, test_loader):
 
 
 def main(args):
+    """
+    主函数，读取配置，并对测试集进行验证或预测
+    :param args: 参数
+    :return: 无返回
+    """
     # --------------------O(∩_∩)O-------------- 成功第一步，固定随机数种子 ----------------------------------
     set_seeds()
     # --------------------O(∩_∩)O-------------- 成功第二步，配置参数 ----------------------------------

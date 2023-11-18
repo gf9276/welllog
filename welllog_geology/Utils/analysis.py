@@ -10,13 +10,13 @@ import torch
 
 def plt_confusion_matrix(predicted, gth, label_classes_name, percentage=False, save_path="confusion_matrix.png"):
     """
-
+    绘制混淆矩阵
     :param predicted: shape = (n,)
     :param gth: shape = (n,)
     :param label_classes_name:
     :param percentage: 是否百分比化
     :param save_path: 保存路径
-    :return:
+    :return: 无返回，直接将混淆矩阵图片保存在 save_path
     """
     # 基本参数
     label_classes_nbr = len(label_classes_name)  # 总类别数量
@@ -65,12 +65,13 @@ def plt_confusion_matrix(predicted, gth, label_classes_name, percentage=False, s
 
 def make_confusion_matrix(predicted, gth, label_classes_nbr):
     """
+    生成混淆矩阵（小数格式）
     矩阵的第0个维度，预测值；第一个维度，表示真实值。比如（3, 5）表示第三行第五列，预测出来是3，实际是5的数量
     和plt的x，y轴规则规则恰好相反
     :param predicted: 预测出来的标签，数字类型的
     :param gth: ground truth
     :param label_classes_nbr: 数字对应的标签名字
-    :return:
+    :return: conf_matrix 混淆矩阵
     """
     conf_matrix = torch.zeros(label_classes_nbr, label_classes_nbr)
     for y, x in zip(predicted, gth):
@@ -82,10 +83,10 @@ def make_confusion_matrix(predicted, gth, label_classes_nbr):
 def make_percentage_confusion_matrix(predicted, gth, label_classes_nbr):
     """
     处理成百分比格式的
-    :param predicted:
-    :param gth:
-    :param label_classes_nbr:
-    :return:
+    :param predicted: 预测出来的标签，数字类型的
+    :param gth: ground truth
+    :param label_classes_nbr: 数字对应的标签名字
+    :return: conf_matrix（混淆矩阵，百分比格式）
     """
     conf_matrix = make_confusion_matrix(predicted, gth, label_classes_nbr)
     total_num = conf_matrix.sum(1)  # 对行求和, 得到预测出来的每一个类别的数量

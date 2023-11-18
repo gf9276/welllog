@@ -46,6 +46,14 @@ def parse_args():
 
 
 def run_epoch(net, train_loader, optimizer, criterion):
+    """
+    跑一轮训练
+    :param net: 网络模型 nn.module
+    :param train_loader: 训练集的dataloader
+    :param optimizer: 优化器
+    :param criterion: 损失函数
+    :return: 准确率和损失值大小
+    """
     net.train()  # 很重要
     total_loss = []
     label_nbr = 0  # 标签总数
@@ -86,6 +94,11 @@ def eval_val(net, val_loader, criterion):
 
 
 def main(args):
+    """
+    主函数，读取配置，并进行训练与验证
+    :param args: 参数
+    :return: 无返回
+    """
     # --------------------O(∩_∩)O-------------- 成功第一步，固定随机数种子 ----------------------------------
     set_seeds()
     # --------------------O(∩_∩)O---------------- 成功第二步，配置参数 -------------------------------------

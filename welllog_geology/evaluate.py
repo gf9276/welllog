@@ -9,10 +9,10 @@ def common_forward(net, batch, criterion):
     """
     前向传播
     复用代码，不知道放哪里好，直接放在这里了，因为训练预测评估都要用到这个
-    :param net:
-    :param batch:
-    :param criterion:
-    :return:
+    :param net: 网络模型
+    :param batch: 批大小
+    :param criterion: 损失函数
+    :return: 损失函数 预测值
     """
     if hasattr(net, 'model_type') and net.model_type == "transformer":
         cur_device = next(net.parameters()).device
@@ -44,9 +44,9 @@ def common_forward(net, batch, criterion):
 def evaluate(net, test_loader, criterion):
     """
     评估代码
-    :param net:
-    :param test_loader:
-    :param criterion:
+    :param net: 网络模型
+    :param test_loader: 测试集 dataloader对象
+    :param criterion: 损失函数
     :return:
     """
     net.eval()  # 很重要
