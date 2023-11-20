@@ -1,7 +1,7 @@
 {
   "tasktype": "2",
-  "subtype": "0",
   "algtype": "3",
+  "subtype": "0",
   "alginstancename": "ResNet18_Reservoir",
   "alginstancealias": "智能储层划分_ResNet18",
   "parameter": [

@@ -1,7 +1,7 @@
 {
   "tasktype": "1",
-  "subtype": "0",
   "algtype": "3",
+  "subtype": "0",
   "alginstancename": "ResNet18_Fluid",
   "alginstancealias": "智能油气识别_ResNet18",
   "parameter": [

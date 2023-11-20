@@ -1,9 +1,9 @@
 {
-  "tasktype": "0",
+  "tasktype": "1",
   "algtype": "6",
   "subtype": "0",
-  "alginstancename": "PreActResNet_Geology",
-  "alginstancealias": "智能分层_PreActResNet",
+  "alginstancename": "PreActResNet_Fluid",
+  "alginstancealias": "智能油气识别_PreActResNet",
   "parameter": [
     {
       "alias": "切片长度",

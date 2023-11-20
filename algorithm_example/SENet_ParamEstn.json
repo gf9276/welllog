@@ -1,9 +1,9 @@
 {
   "tasktype": "4",
-  "subtype": "1",
   "algtype": "5",
+  "subtype": "1",
   "alginstancename": "SENet_ParamEstn",
-  "alginstancealias": "智能分层_SENet",
+  "alginstancealias": "智能参数估计_SENet",
   "parameter": [
     {
       "alias": "切片长度",
