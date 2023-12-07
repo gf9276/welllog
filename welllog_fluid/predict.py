@@ -116,7 +116,7 @@ def main(args):
             test_filepath,
             label_classes,
             batch_size * 8,  # 我已经全速前进了
-            num_workers=3 * cpu_count() // 4,
+            num_workers= cpu_count() // 4,
             shuffle=False,
             which_wells=[well_name])
         if test_dataset.have_label:

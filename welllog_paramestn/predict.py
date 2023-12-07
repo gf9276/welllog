@@ -48,11 +48,21 @@ def predict(net, test_loader):
 
     with torch.no_grad():
         for batch_idx, batch in enumerate(test_loader):
-            this_batch = sample_to_device(batch, cur_device)
-            features = torch.swapaxes(this_batch["features"], 1, 2)
-            output = net(features).squeeze()
-            predicted = output.clone().detach()  # 获取标签
-            all_predicted.append(predicted)
+            if hasattr(net, 'model_type') and net.model_type == "transformer":
+                this_batch = sample_to_device(batch, cur_device)
+                features = this_batch["features"]
+                transformer_batch = net.get_batch(features, None, 926219)
+                output = net.forward(src=transformer_batch.src, src_mask=transformer_batch.src_mask, just_encoder=True)
+                output = output[:, output.shape[1] // 2, :].squeeze()
+                predicted = output.clone().detach()  # 获取标签
+                all_predicted.append(predicted)
+
+            else:
+                this_batch = sample_to_device(batch, cur_device)
+                features = torch.swapaxes(this_batch["features"], 1, 2)
+                output = net(features).squeeze()
+                predicted = output.clone().detach()  # 获取标签
+                all_predicted.append(predicted)
 
         all_predicted = torch.cat(tuple(all_predicted), dim=0)
 
@@ -105,7 +115,7 @@ def main(args):
             test_filepath,
             label_classes,
             batch_size * 8,  # 我已经全速前进了
-            num_workers=cpu_count(),
+            num_workers=cpu_count() // 4,
             shuffle=False,
             which_wells=[well_name])
         if test_dataset.have_label:

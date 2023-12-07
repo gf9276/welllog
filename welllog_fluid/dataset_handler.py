@@ -102,7 +102,7 @@ class WellDatasetCtrls:
         self.json_cfg_filepath = json_cfg_filepath
         self.draw_plt = draw_plt
         self.cfg_param = read_json(json_cfg_filepath)  # 读取配置
-        self.proc_nbr = cpu_count()  # 全速前进！
+        self.proc_nbr = cpu_count() // 4 # 全速前进！
 
         # ----------------------------------------------------------这些都是具体的配置---------------------------------------------------------
         # 切片长度，默认为1

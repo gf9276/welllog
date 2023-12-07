@@ -30,7 +30,7 @@ def parse_args():
     """
     parser = argparse.ArgumentParser(description='Train a model')
     # 模型配置文件
-    parser.add_argument('--config', default="SENet_ParamEstn", help='模型的名字')
+    parser.add_argument('--config', default="Transformer_ParamEstn", help='模型的名字')
     # 文件和路径相关
     parser.add_argument('--logging_filepath', default="./Log/Train/logging.json", help='日志文件路径')
     parser.add_argument('--model_save_path', default="./Log/Train/output.pth", help='模型文件保存路径')
@@ -99,13 +99,13 @@ def main(args):
     # --------------------O(∩_∩)O---------------- 成功第二步，配置参数 -------------------------------------
     # 01 获取 args 配置参数, 训练脚本的相关参数
     cfg = "Algorithm." + args.config
-    logging_filepath = args.logging_filepath
+    logging_filepath = str(Path(args.logging_filepath))
     log_dir = str(Path(logging_filepath).parent)
     Path(log_dir).mkdir(parents=True, exist_ok=True)
-    model_save_path = args.model_save_path
-    train_h5filepath = args.train_filepath
-    val_h5filepath = args.val_filepath
-    checkpoint = args.checkpoint
+    model_save_path = str(Path(args.model_save_path))
+    train_h5filepath = str(Path(args.train_filepath))
+    val_h5filepath = str(Path(args.val_filepath))
+    checkpoint = str(Path(args.checkpoint))
     pretrained = args.pretrained
     draw_plt = args.draw_plt
     gpu_id = args.gpu_id
@@ -120,13 +120,13 @@ def main(args):
         train_h5filepath,
         label_classes,
         batch_size,
-        num_workers=cpu_count(),
+        num_workers=cpu_count() // 4,
         shuffle=True)
     val_dataset, val_loader = setup_dataloaders(
         val_h5filepath,
         label_classes,
         batch_size,
-        num_workers=cpu_count(),
+        num_workers=cpu_count() // 4,
         shuffle=False)
     # ---------------O(∩_∩)O--------------- 成功第四步，加载模型（if need） ------------------------------
     net = x.Net()

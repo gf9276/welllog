@@ -112,13 +112,13 @@ def main(args):
         train_h5filepath,
         label_classes,
         batch_size,
-        num_workers=3 * cpu_count() // 4,
+        num_workers=cpu_count() // 4,
         shuffle=True)
     val_dataset, val_loader = setup_dataloaders(
         val_h5filepath,
         label_classes,
         batch_size,
-        num_workers=3 * cpu_count() // 4,
+        num_workers=cpu_count() // 4,
         shuffle=False)
     # ---------------O(∩_∩)O--------------- 成功第四步，加载模型（if need） ------------------------------
     net = x.Net()

@@ -1,0 +1,217 @@
+{
+  "tasktype": "4",
+  "algtype": "8",
+  "subtype": "1",
+  "alginstancename": "Transformer_ParamEstn",
+  "alginstancealias": "智能参数估计_Transformer",
+  "parameter": [
+    {
+      "alias": "切片长度",
+      "val": "97",
+      "min": "33",
+      "max": "197",
+      "name": "slicelength",
+      "enable": "true"
+    },
+    {
+      "alias": "训练轮次",
+      "val": "1",
+      "min": "10",
+      "max": "1000",
+      "name": "epoch",
+      "enable": "true"
+    },
+    {
+      "alias": "批次大小",
+      "val": "64",
+      "min": "1",
+      "max": "10000",
+      "name": "batchsize",
+      "enable": "true"
+    },
+    {
+      "alias": "学习率",
+      "val": "0.002",
+      "min": "0",
+      "max": "1",
+      "name": "learningrate",
+      "enable": "true"
+    },
+    {
+      "alias": "损失函数",
+      "enums": [
+        "CrossEntropy"
+      ],
+      "val": "0",
+      "min": "0",
+      "max": "0",
+      "name": "lossfunc",
+      "enable": "true"
+    }
+  ],
+  "algmodelname": "transformer_1335",
+  "algmodelid": "null",
+  "author": "null",
+  "block": "未知",
+  "datasetname": "定边预探井130_全井段_地质分层20230725",
+  "datasetid": "6",
+  "description": "hello",
+  "feature": [
+    "AC",
+    "CALADD",
+    "GR",
+    "PORDN",
+    "DEPTH"
+  ],
+  "label": {
+    "name": "RT"
+  },
+  "procinfo": [
+    {
+      "DEPTH": [
+        [
+          "remove",
+          "-99999.00"
+        ],
+        [
+          "mn",
+          "0.00",
+          "4999.88"
+        ]
+      ]
+    },
+    {
+      "SPC": [
+        [
+          "remove",
+          "-99999.00"
+        ],
+        [
+          "sd",
+          "-15.03",
+          "15.22"
+        ]
+      ]
+    },
+    {
+      "CAL": [
+        [
+          "remove",
+          "-99999.00"
+        ],
+        [
+          "sd",
+          "22.59",
+          "3.18"
+        ]
+      ]
+    },
+    {
+      "CALADD": [
+        [
+          "remove",
+          "-99999.00"
+        ],
+        [
+          "sd",
+          "0.04",
+          "0.15"
+        ]
+      ]
+    },
+    {
+      "GR": [
+        [
+          "remove",
+          "-99999.00"
+        ],
+        [
+          "sd",
+          "87.77",
+          "30.68"
+        ]
+      ]
+    },
+    {
+      "RT": [
+        [
+          "remove",
+          "-99999.00"
+        ],
+        [
+          "log"
+        ],
+        [
+          "sd",
+          "1.20",
+          "0.36"
+        ]
+      ]
+    },
+    {
+      "AC": [
+        [
+          "remove",
+          "-99999.00"
+        ],
+        [
+          "sd",
+          "263.12",
+          "56.16"
+        ]
+      ]
+    },
+    {
+      "CNL": [
+        [
+          "remove",
+          "-99999.00"
+        ],
+        [
+          "sd",
+          "23.76",
+          "8.62"
+        ]
+      ]
+    },
+    {
+      "DEN": [
+        [
+          "remove",
+          "-99999.00"
+        ],
+        [
+          "sd",
+          "2.48",
+          "0.17"
+        ]
+      ]
+    },
+    {
+      "PORDN": [
+        [
+          "remove",
+          "-99999.00"
+        ],
+        [
+          "sd",
+          "-16.96",
+          "9.25"
+        ]
+      ]
+    },
+    {
+      "SEAMFLAG": [
+        [
+          "remove",
+          "-99999.00"
+        ],
+        [
+          "mn",
+          "0.00",
+          "1.00"
+        ]
+      ]
+    }
+  ]
+}
