@@ -26,8 +26,9 @@ def parse_args():
     :return:
     """
     parser = argparse.ArgumentParser(description='处理样本集')
-    parser.add_argument('--json', default="定边/定边预探井130_全井段_地质分层20230725/pre_proc.json", help='json文件的路径')
-    parser.add_argument('--draw_plt', default="False", help='是否绘图')
+    parser.add_argument('--json', default="定边/定边预探井130_全井段_地质分层20230725/pre_proc.json",
+                        help='json文件的路径')
+    parser.add_argument('--draw_plt', default="True", help='是否绘图')
     args = parser.parse_args()
     return args
 
@@ -101,7 +102,7 @@ class WellDatasetCtrls:
         self.json_cfg_filepath = json_cfg_filepath
         self.draw_plt = draw_plt
         self.cfg_param = read_json(json_cfg_filepath)  # 读取配置
-        self.proc_nbr = cpu_count() // 4  # 全速前进！
+        self.proc_nbr = cpu_count()  # 全速前进！
 
         # ----------------------------------------------------------这些都是具体的配置---------------------------------------------------------
         # 切片长度，默认为1
@@ -116,7 +117,8 @@ class WellDatasetCtrls:
         self.slice_step = max(1, self.slice_step)
 
         # 路径
-        self.dataset_filepath = self.cfg_param["dataset_filepath"] if "dataset_filepath" in self.cfg_param.keys() else None
+        self.dataset_filepath = self.cfg_param[
+            "dataset_filepath"] if "dataset_filepath" in self.cfg_param.keys() else None
         self.output_dir = self.cfg_param["output_dir"] if "output_dir" in self.cfg_param.keys() else None
 
         # 特征和标签
@@ -140,7 +142,8 @@ class WellDatasetCtrls:
         if "dataset_divide_method" in self.cfg_param.keys():
             self.dataset_divide_method = self.cfg_param["dataset_divide_method"]
 
-        self.train_set_list = list(set(self.cfg_param["train_set_list"])) if "train_set_list" in self.cfg_param.keys() else []
+        self.train_set_list = list(
+            set(self.cfg_param["train_set_list"])) if "train_set_list" in self.cfg_param.keys() else []
         self.val_set_list = list(set(self.cfg_param["val_set_list"])) if "val_set_list" in self.cfg_param.keys() else []
 
         # 处理参数
@@ -151,6 +154,8 @@ class WellDatasetCtrls:
         self.proc_method = "train"
         if "proc_method" in self.cfg_param.keys():
             self.proc_method = self.cfg_param["proc_method"]
+
+        self.label_exist = False
         if self.label_name is None:
             self.proc_method = "test"
         if self.proc_method == "test":
@@ -181,6 +186,8 @@ class WellDatasetCtrls:
             return
         for well_name in sliced_dataset.keys():
             label = sliced_dataset[well_name]["label"]
+            if label is None:
+                return
             values, cnt = np.unique(label, return_counts=True)
             # 少，才能画直方图
             if len(cnt) < 50:
@@ -194,7 +201,8 @@ class WellDatasetCtrls:
                 ax_bar.legend()
                 ax_bar.bar_label(rects, label_type='edge', fontsize=6, rotation=45)
                 plt.xticks(fontsize=6, rotation=45)
-                plt.savefig(str(pathlib.Path(self.output_dir) / (title + "_" + well_name + "_分布.svg")), dpi=600, format='svg')
+                plt.savefig(str(pathlib.Path(self.output_dir) / (title + "_" + well_name + "_分布.svg")), dpi=600,
+                            format='svg')
                 # plt.show()
                 plt.close()
             else:
@@ -206,7 +214,8 @@ class WellDatasetCtrls:
                 ax_liner.set_title('label distribution')
                 ax_liner.legend()
                 plt.xticks(fontsize=6, rotation=45)
-                plt.savefig(str(pathlib.Path(self.output_dir) / (title + "_" + well_name + "_分布.svg")), dpi=600, format='svg')
+                plt.savefig(str(pathlib.Path(self.output_dir) / (title + "_" + well_name + "_分布.svg")), dpi=600,
+                            format='svg')
                 # plt.show()
                 plt.close()
 
@@ -258,9 +267,13 @@ class WellDatasetCtrls:
             for key in dataset_file[well_name]:
                 # 第二层是曲线名字，只读取特征和标签
                 if (key in self.features_name) or (self.label_name is not None and key == self.label_name):
-                    dataset[well_name][key] = dataset_file[well_name][key][:].astype("float32").reshape(-1, 1)  # 变成二维后面好拼接
+                    dataset[well_name][key] = dataset_file[well_name][key][:].astype("float32").reshape(-1,
+                                                                                                        1)  # 变成二维后面好拼接
                     dataset[well_name][key][np.isnan(dataset[well_name][key])] = -99999  # 非法值直接变成-99999
                     dataset[well_name][key][np.isinf(dataset[well_name][key])] = -99999  # 非法值直接变成-99999
+            # 读完之后再判断是否存在标签，默认所有井情况一样
+            if self.label_name is not None and self.label_name in dataset[well_name]:
+                self.label_exist = True
         dataset_file.close()
         return dataset
 
@@ -278,14 +291,15 @@ class WellDatasetCtrls:
             # --------------------------------------------进行同长度处理，如果不是同长度，不是我的问题-------------------------------------------
             min_length = None
             for key in a_well_dataset.keys():
-                min_length = a_well_dataset[key].shape[0] if min_length is None else min(min_length, a_well_dataset[key].shape[0])
+                min_length = a_well_dataset[key].shape[0] if min_length is None else min(min_length,
+                                                                                         a_well_dataset[key].shape[0])
             for key in a_well_dataset:
                 if min_length < a_well_dataset[key].shape[0]:
                     a_well_dataset[key] = a_well_dataset[key][0:min_length, :]
 
             # --------------------------------------------合并所有数据，前面n列是特征，最后一列是标签-------------------------------------------
             features = np.concatenate(tuple(a_well_dataset[key] for key in self.features_name), 1)
-            if self.label_name is not None:
+            if self.label_name is not None and self.label_exist:
                 label = a_well_dataset[self.label_name]
                 features_and_labels = np.concatenate((features, label), 1)
             else:
@@ -295,8 +309,10 @@ class WellDatasetCtrls:
             if self.add_padding:
                 # 复制比填充好
                 opening_features_and_labels = np.copy(features_and_labels[0:self.slice_length // 2])
-                ending_features_and_labels = np.copy(features_and_labels[-(self.slice_length - self.slice_length // 2 - 1):])
-                features_and_labels = np.concatenate((opening_features_and_labels, features_and_labels, ending_features_and_labels), 0)
+                ending_features_and_labels = np.copy(
+                    features_and_labels[-(self.slice_length - self.slice_length // 2 - 1):])
+                features_and_labels = np.concatenate(
+                    (opening_features_and_labels, features_and_labels, ending_features_and_labels), 0)
 
                 # features_and_labels = np.pad(features_and_labels,
                 #                              ((self.slice_length // 2, self.slice_length - self.slice_length // 2 - 1), (0, 0)),
@@ -343,7 +359,7 @@ class WellDatasetCtrls:
                 if key in self.features_name:
                     # 检索具体处理内容
                     key_idx = self.features_name.index(key)
-                elif self.label_name is not None and key == self.label_name:
+                elif self.label_name is not None and key == self.label_name and self.label_exist:
                     key_idx = len(self.features_name)  # 只有一个标签，当然是最后一个了
 
                 # 开始处理
@@ -359,10 +375,15 @@ class WellDatasetCtrls:
                         if self.proc_info[key][i][0] == "mn":
                             if len(self.proc_info[key][i]) >= 3:
                                 # 直接使用他的参数。为了防止，最后面有一个l之类的符号
-                                min_value = float(self.proc_info[key][i][1] if self.proc_info[key][i][1][-1].isdigit() else self.proc_info[key][i][1][:-1])
-                                max_value = float(self.proc_info[key][i][2] if self.proc_info[key][i][2][-1].isdigit() else self.proc_info[key][i][2][:-1])
+                                min_value = float(
+                                    self.proc_info[key][i][1] if self.proc_info[key][i][1][-1].isdigit() else
+                                    self.proc_info[key][i][1][:-1])
+                                max_value = float(
+                                    self.proc_info[key][i][2] if self.proc_info[key][i][2][-1].isdigit() else
+                                    self.proc_info[key][i][2][:-1])
                             else:
-                                all_well_dataset_outlier_idx = (abs(matrix_dataset[:, key_idx] - (-99999)) < 1) | np.isnan(matrix_dataset[:, key_idx])
+                                all_well_dataset_outlier_idx = (abs(matrix_dataset[:, key_idx] - (
+                                    -99999)) < 1) | np.isnan(matrix_dataset[:, key_idx])
                                 min_value = matrix_dataset[:, key_idx][~all_well_dataset_outlier_idx].min()
                                 max_value = matrix_dataset[:, key_idx][~all_well_dataset_outlier_idx].max()
                             if outlier_idx.sum() != 0:
@@ -376,10 +397,15 @@ class WellDatasetCtrls:
                         elif self.proc_info[key][i][0] == "sd":
                             if len(self.proc_info[key][i]) >= 3:
                                 # 直接使用他的参数。为了防止，最后面有一个l之类的符号
-                                mean_value = float(self.proc_info[key][i][1] if self.proc_info[key][i][1][-1].isdigit() else self.proc_info[key][i][1][:-1])
-                                std_value = float(self.proc_info[key][i][2] if self.proc_info[key][i][2][-1].isdigit() else self.proc_info[key][i][2][:-1])
+                                mean_value = float(
+                                    self.proc_info[key][i][1] if self.proc_info[key][i][1][-1].isdigit() else
+                                    self.proc_info[key][i][1][:-1])
+                                std_value = float(
+                                    self.proc_info[key][i][2] if self.proc_info[key][i][2][-1].isdigit() else
+                                    self.proc_info[key][i][2][:-1])
                             else:
-                                all_well_dataset_outlier_idx = (abs(matrix_dataset[:, key_idx] - (-99999)) < 1) | np.isnan(matrix_dataset[:, key_idx])
+                                all_well_dataset_outlier_idx = (abs(matrix_dataset[:, key_idx] - (
+                                    -99999)) < 1) | np.isnan(matrix_dataset[:, key_idx])
                                 mean_value = matrix_dataset[:, key_idx][~all_well_dataset_outlier_idx].mean()
                                 std_value = matrix_dataset[:, key_idx][~all_well_dataset_outlier_idx].std()
                             if outlier_idx.sum() != 0:
@@ -391,7 +417,8 @@ class WellDatasetCtrls:
                         # -----------------------------------------------------------------------------------------------------------------------------------
                         elif self.proc_info[key][i][0] == "log":
                             # outlier_idx |= merged_dataset[well_name][:, key_idx] <= 0  # 既然要log，小于等于0的也是异常值
-                            merged_dataset[well_name][:, key_idx][merged_dataset[well_name][:, key_idx] <= 0] = 1  # 要log的甚至有负数
+                            merged_dataset[well_name][:, key_idx][
+                                merged_dataset[well_name][:, key_idx] <= 0] = 1  # 要log的甚至有负数
                             if outlier_idx.sum() != 0:
                                 merged_dataset[well_name][:, key_idx][outlier_idx] = 1
                             merged_dataset[well_name][:, key_idx] = np.log10(merged_dataset[well_name][:, key_idx])
@@ -411,40 +438,50 @@ class WellDatasetCtrls:
         # 判断是否能切
         while cur_idx + self.slice_length <= merged_dataset[well_name].shape[0]:
             # ----------------------------------------------------------获取每个切片的特征---------------------------------------------------------
-            cur_feature = np.expand_dims(merged_dataset[well_name][cur_idx: cur_idx + self.slice_length, 0:len(self.features_name)], axis=0)
+            cur_feature = np.expand_dims(
+                merged_dataset[well_name][cur_idx: cur_idx + self.slice_length, 0:len(self.features_name)], axis=0)
             sliced_features_list.append(cur_feature)
 
-            if self.label_name is not None:
+            if self.label_name is not None and self.label_exist:
                 # ----------------------------------------------------------获取每个切片的单个标签---------------------------------------------------------
                 if self.label_type == "mode":
                     mode_label_list = []  # 众数 --> mode，我也很奇怪，众数的英文居然是mode
-                    for i in range(merged_dataset[well_name][cur_idx: cur_idx + self.slice_length, len(self.features_name):].shape[1]):
-                        u, c = np.unique(merged_dataset[well_name][cur_idx: cur_idx + self.slice_length, len(self.features_name):][:, i], return_counts=True)
+                    for i in range(merged_dataset[well_name][cur_idx: cur_idx + self.slice_length,
+                                   len(self.features_name):].shape[1]):
+                        u, c = np.unique(
+                            merged_dataset[well_name][cur_idx: cur_idx + self.slice_length, len(self.features_name):][:,
+                            i], return_counts=True)
                         mode_label_list.append(u[c.argmax()])
                         mode_label = np.array(mode_label_list).reshape(1, 1, -1)
                         sliced_label_list.append(mode_label)
                 elif self.label_type == "median":
-                    median_label = merged_dataset[well_name][cur_idx: cur_idx + self.slice_length, len(self.features_name):][self.slice_length // 2, :]
+                    median_label = merged_dataset[well_name][cur_idx: cur_idx + self.slice_length,
+                                   len(self.features_name):][self.slice_length // 2, :]
                     median_label = median_label.reshape(1, 1, -1)
                     sliced_label_list.append(median_label)
 
                 # ----------------------------------------------------------获取每个切片的一对一标签---------------------------------------------------------
-                cur_mul_label = merged_dataset[well_name][cur_idx: cur_idx + self.slice_length, len(self.features_name):].reshape(1, self.slice_length, -1)
+                cur_mul_label = merged_dataset[well_name][cur_idx: cur_idx + self.slice_length,
+                                len(self.features_name):].reshape(1, self.slice_length, -1)
                 sliced_mul_label_list.append(cur_mul_label)
 
                 # ----------------------------------------------------------获取每个切片是否存在异常值---------------------------------------------------------
-                cur_outlier = (merged_dataset_outlier[well_name][cur_idx: cur_idx + self.slice_length]).sum() > (self.slice_length // 10)
+                cur_outlier = (merged_dataset_outlier[well_name][cur_idx: cur_idx + self.slice_length]).sum() > (
+                            self.slice_length // 10)
                 sliced_outlier_list.append(np.asarray(cur_outlier).reshape(-1))  # 异常值大于指定行数，我就认为你是异常切片
 
             # ----------------------------------------------------------刷新步长---------------------------------------------------------
             cur_idx += self.slice_step
 
-        sliced_features = np.concatenate(tuple(sliced_features_list), 0) if len(sliced_features_list) != 0 else None  # n * 97 * 5
+        sliced_features = np.concatenate(tuple(sliced_features_list), 0) if len(
+            sliced_features_list) != 0 else None  # n * 97 * 5
         sliced_label = np.concatenate(tuple(sliced_label_list), 0) if len(sliced_label_list) != 0 else None  # n * 1 * 1
-        sliced_mul_label = np.concatenate(tuple(sliced_mul_label_list), 0) if len(sliced_mul_label_list) != 0 else None  # n * 97 * 1
+        sliced_mul_label = np.concatenate(tuple(sliced_mul_label_list), 0) if len(
+            sliced_mul_label_list) != 0 else None  # n * 97 * 1
         sliced_outlier = np.concatenate(tuple(sliced_outlier_list), 0) if len(sliced_outlier_list) != 0 else None
 
-        return {"features": sliced_features, "label": sliced_label, "multi_label": sliced_mul_label, "outlier": sliced_outlier}
+        return {"features": sliced_features, "label": sliced_label, "multi_label": sliced_mul_label,
+                "outlier": sliced_outlier}
 
     def slice_dataset(self, merged_dataset, merged_dataset_outlier):
         """
@@ -469,7 +506,7 @@ class WellDatasetCtrls:
         :return:
         """
         # ----------------------------------------------------------是否保留异常值---------------------------------------------------------
-        if self.keep_outlier_label is False and self.label_name is not None:
+        if self.keep_outlier_label is False and self.label_name is not None and self.label_exist:
             for well_name in list(sliced_dataset.keys()):
                 normal_value_idx = np.zeros((sliced_dataset[well_name]["label"].shape[0])) != 0  # 生成一坨false
                 for i in range(sliced_dataset[well_name]["label"].shape[1]):
@@ -483,7 +520,8 @@ class WellDatasetCtrls:
                     # 存在可用数据就更新一下
                     sliced_dataset[well_name]["label"] = sliced_dataset[well_name]["label"][normal_value_idx, :]
                     sliced_dataset[well_name]["features"] = sliced_dataset[well_name]["features"][normal_value_idx, :]
-                    sliced_dataset[well_name]["multi_label"] = sliced_dataset[well_name]["multi_label"][normal_value_idx, :]
+                    sliced_dataset[well_name]["multi_label"] = sliced_dataset[well_name]["multi_label"][
+                                                               normal_value_idx, :]
                     sliced_dataset[well_name]["outlier"] = sliced_dataset[well_name]["outlier"][normal_value_idx]
 
         if remove_outlier_sliced:
@@ -494,7 +532,8 @@ class WellDatasetCtrls:
                 else:
                     sliced_dataset[well_name]["label"] = sliced_dataset[well_name]["label"][keep_sliced_idx, :]
                     sliced_dataset[well_name]["features"] = sliced_dataset[well_name]["features"][keep_sliced_idx, :]
-                    sliced_dataset[well_name]["multi_label"] = sliced_dataset[well_name]["multi_label"][keep_sliced_idx, :]
+                    sliced_dataset[well_name]["multi_label"] = sliced_dataset[well_name]["multi_label"][keep_sliced_idx,
+                                                               :]
                     sliced_dataset[well_name]["outlier"] = sliced_dataset[well_name]["outlier"][keep_sliced_idx]
 
         # ----------------------------------------------------------训练集还是测试集---------------------------------------------------------
@@ -569,10 +608,14 @@ class WellDatasetCtrls:
 
         else:
             # 按照切片分预测值
-            all_sliced_features = np.concatenate(tuple(sliced_dataset[well_name]["features"] for well_name in sliced_dataset.keys()), 0)
-            all_sliced_label = np.concatenate(tuple(sliced_dataset[well_name]["label"] for well_name in sliced_dataset.keys()), 0)
-            all_sliced_multi_label = np.concatenate(tuple(sliced_dataset[well_name]["multi_label"] for well_name in sliced_dataset.keys()), 0)
-            all_sliced_outlier = np.concatenate(tuple(sliced_dataset[well_name]["outlier"] for well_name in sliced_dataset.keys()), 0)
+            all_sliced_features = np.concatenate(
+                tuple(sliced_dataset[well_name]["features"] for well_name in sliced_dataset.keys()), 0)
+            all_sliced_label = np.concatenate(
+                tuple(sliced_dataset[well_name]["label"] for well_name in sliced_dataset.keys()), 0)
+            all_sliced_multi_label = np.concatenate(
+                tuple(sliced_dataset[well_name]["multi_label"] for well_name in sliced_dataset.keys()), 0)
+            all_sliced_outlier = np.concatenate(
+                tuple(sliced_dataset[well_name]["outlier"] for well_name in sliced_dataset.keys()), 0)
             # 打乱所有切片顺序
             random_range = get_random_range(all_sliced_features.shape[0])
             all_sliced_features = all_sliced_features[random_range]
@@ -610,7 +653,7 @@ class WellDatasetCtrls:
             h5_file.attrs["slice_length"] = self.slice_length
             h5_file.attrs["slice_step"] = self.slice_step
             h5_file.attrs["proc_info"] = json.dumps(self.proc_info)
-            h5_file.attrs["label_name"] = self.label_name
+            h5_file.attrs["label_name"] = self.label_name if self.label_name is not None else ""
 
         # 保存数据
         for i in sliced_dataset[list(sliced_dataset.keys())[0]].keys():

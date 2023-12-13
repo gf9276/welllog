@@ -26,7 +26,7 @@ def parse_args():
     :return:
     """
     parser = argparse.ArgumentParser(description='处理样本集')
-    parser.add_argument('--json', default="Data/陕西省吴起县/华池南梁all/华池南梁all_pretreatment.json",
+    parser.add_argument('--json', default="定边/定边预探井130_全井段_地质分层20230725/pre_proc.json",
                         help='json文件的路径')
     parser.add_argument('--draw_plt', default="True", help='是否绘图')
     args = parser.parse_args()
@@ -69,10 +69,10 @@ def read_json(json_cfg_filepath):
 def sava_data2h5(h5_filepath, sliced_dataset, grp_name):
     """
     保存数据到h5里
-    :param h5_filepath: 等待保存的路径
-    :param sliced_dataset: 切片好的数据集
-    :param grp_name: 保存到.h5里面之后的group(h5文件的一种格式)名字
-    :return: 无返回
+    :param h5_filepath:
+    :param sliced_dataset:
+    :param grp_name:
+    :return:
     """
     try:
         h5_file = h5py.File(h5_filepath, "w-")  # 写模式与w类似，但是如果h5文件已经存在的话，会报错
@@ -95,14 +95,14 @@ def sava_data2h5(h5_filepath, sliced_dataset, grp_name):
 class WellDatasetCtrls:
     def __init__(self, json_cfg_filepath, draw_plt):
         """
-        用于处理测井数据，从而得到训练集、验证集和测试集的类。根据json文件路径和初始化
-        :param json_cfg_filepath: json配置文件
-        :param draw_plt: 是否进行图像的绘制
+        根据json文件路径和初始化
+        :param json_cfg_filepath:
+        :param draw_plt:
         """
         self.json_cfg_filepath = json_cfg_filepath
         self.draw_plt = draw_plt
         self.cfg_param = read_json(json_cfg_filepath)  # 读取配置
-        self.proc_nbr = cpu_count() // 4 # 全速前进！
+        self.proc_nbr = cpu_count()  # 全速前进！
 
         # ----------------------------------------------------------这些都是具体的配置---------------------------------------------------------
         # 切片长度，默认为1
@@ -154,6 +154,8 @@ class WellDatasetCtrls:
         self.proc_method = "train"
         if "proc_method" in self.cfg_param.keys():
             self.proc_method = self.cfg_param["proc_method"]
+
+        self.label_exist = False
         if self.label_name is None:
             self.proc_method = "test"
         if self.proc_method == "test":
@@ -161,11 +163,6 @@ class WellDatasetCtrls:
             self.add_padding = True  # 预测强制默认加padding
 
     def extend_dataset(self, sliced_dataset):
-        """
-        数据集增广，使用复制的方式对原有的数据集进行增广
-        :param sliced_dataset: 切片好的数据
-        :return: 增广之后的数据
-        """
         for well_name in sliced_dataset.keys():
             label = sliced_dataset[well_name]["label"]
             values, cnt = np.unique(label, return_counts=True)
@@ -185,16 +182,12 @@ class WellDatasetCtrls:
         return sliced_dataset
 
     def analysis_label(self, sliced_dataset, title="unknown"):
-        """
-        对标签的分布进行分析，并绘制对应的分布图
-        :param sliced_dataset: 切片好的数据
-        :param title: matplotlib绘制出图像的标题
-        :return: 无返回，直接进行图片的绘制
-        """
         if not self.draw_plt:
             return
         for well_name in sliced_dataset.keys():
             label = sliced_dataset[well_name]["label"]
+            if label is None:
+                return
             values, cnt = np.unique(label, return_counts=True)
             # 少，才能画直方图
             if len(cnt) < 50:
@@ -228,8 +221,8 @@ class WellDatasetCtrls:
 
     def proc_dataset(self):
         """
-        处理数据集全流程，读取-->二值化-->拼接-->切片-->按照参数进行预处理-->保存。
-        :return: 无返回值
+        处理数据集全流程
+        :return:
         """
 
         start_time = time.time()
@@ -262,8 +255,8 @@ class WellDatasetCtrls:
 
     def read_dataset(self):
         """
-        使用h5py库，对原始数据集进行读取操作，并保存到内存之中
-        :return: dataset: 读取好的数据集
+        读取数据集
+        :return:
         """
         dataset = {}
 
@@ -278,6 +271,9 @@ class WellDatasetCtrls:
                                                                                                         1)  # 变成二维后面好拼接
                     dataset[well_name][key][np.isnan(dataset[well_name][key])] = -99999  # 非法值直接变成-99999
                     dataset[well_name][key][np.isinf(dataset[well_name][key])] = -99999  # 非法值直接变成-99999
+            # 读完之后再判断是否存在标签，默认所有井情况一样
+            if self.label_name is not None and self.label_name in dataset[well_name]:
+                self.label_exist = True
         dataset_file.close()
         return dataset
 
@@ -285,7 +281,7 @@ class WellDatasetCtrls:
         """
         拼接数据集，前面都是特征，最后一列是标签
         :param dataset:
-        :return: merged_dataset 拼接好的数据集
+        :return:
         """
         merged_dataset = {}
         for well_name in dataset.keys():
@@ -303,7 +299,7 @@ class WellDatasetCtrls:
 
             # --------------------------------------------合并所有数据，前面n列是特征，最后一列是标签-------------------------------------------
             features = np.concatenate(tuple(a_well_dataset[key] for key in self.features_name), 1)
-            if self.label_name is not None:
+            if self.label_name is not None and self.label_exist:
                 label = a_well_dataset[self.label_name]
                 features_and_labels = np.concatenate((features, label), 1)
             else:
@@ -328,7 +324,7 @@ class WellDatasetCtrls:
     def __cat_merged_dataset__(self, merged_dataset):
         """
         把所有井的数据合到一起，合成一个矩阵
-        :return: 拼接好的数据
+        :return:
         """
         dataset_list = []
         for well_name in list(merged_dataset.keys()):
@@ -337,8 +333,8 @@ class WellDatasetCtrls:
 
     def proc_merged_dataset(self, merged_dataset):
         """
-        按照json格式的要求，处理数据
-        :return: 处理好的数据集
+        处理数据
+        :return:
         """
         matrix_dataset = self.__cat_merged_dataset__(merged_dataset)
         merged_dataset_outlier = {}
@@ -363,7 +359,7 @@ class WellDatasetCtrls:
                 if key in self.features_name:
                     # 检索具体处理内容
                     key_idx = self.features_name.index(key)
-                elif self.label_name is not None and key == self.label_name:
+                elif self.label_name is not None and key == self.label_name and self.label_exist:
                     key_idx = len(self.features_name)  # 只有一个标签，当然是最后一个了
 
                 # 开始处理
@@ -434,13 +430,6 @@ class WellDatasetCtrls:
         return merged_dataset, merged_dataset_outlier
 
     def slice_a_well_dataset(self, merged_dataset, merged_dataset_outlier, well_name):
-        """
-        对一口井的数据进行切片操作
-        :param merged_dataset: 拼接好的数据集
-        :param merged_dataset_outlier: 异常值索引
-        :param well_name: 井的名字
-        :return: 切片好的数据
-        """
         sliced_features_list = []  # 切片后的特征
         sliced_label_list = []  # 切片后的标签
         sliced_mul_label_list = []  # 切片后的标签
@@ -453,7 +442,7 @@ class WellDatasetCtrls:
                 merged_dataset[well_name][cur_idx: cur_idx + self.slice_length, 0:len(self.features_name)], axis=0)
             sliced_features_list.append(cur_feature)
 
-            if self.label_name is not None:
+            if self.label_name is not None and self.label_exist:
                 # ----------------------------------------------------------获取每个切片的单个标签---------------------------------------------------------
                 if self.label_type == "mode":
                     mode_label_list = []  # 众数 --> mode，我也很奇怪，众数的英文居然是mode
@@ -496,10 +485,10 @@ class WellDatasetCtrls:
 
     def slice_dataset(self, merged_dataset, merged_dataset_outlier):
         """
-        对所有井的数据进行切片。
-        :param merged_dataset: 拼接好的数据
-        :param merged_dataset_outlier: 异常值的索引
-        :return: 切片好的数据
+        多线程切片
+        :param merged_dataset:
+        :param merged_dataset_outlier:
+        :return:
         """
         # ----------------------------------------------------------处理---------------------------------------------------------
         sliced_dataset = {}
@@ -514,10 +503,10 @@ class WellDatasetCtrls:
         处理切片完的数据集，主要是标签异常值是否保留
         :param sliced_dataset:
         :param remove_outlier_sliced:
-        :return: 处理完的数据
+        :return:
         """
         # ----------------------------------------------------------是否保留异常值---------------------------------------------------------
-        if self.keep_outlier_label is False and self.label_name is not None:
+        if self.keep_outlier_label is False and self.label_name is not None and self.label_exist:
             for well_name in list(sliced_dataset.keys()):
                 normal_value_idx = np.zeros((sliced_dataset[well_name]["label"].shape[0])) != 0  # 生成一坨false
                 for i in range(sliced_dataset[well_name]["label"].shape[1]):
@@ -561,9 +550,9 @@ class WellDatasetCtrls:
 
     def specify_partition_dataset(self, sliced_dataset):
         """
-        指定划分数据集（按照json提供的训练集或这数据集列表）
-        :param sliced_dataset: 切片完的数据
-        :return: 划分好的数据集
+        指定划分数据集
+        :param sliced_dataset:
+        :return:
         """
         wells_name = list(sliced_dataset.keys())
         train_sliced_dataset = {}
@@ -591,9 +580,9 @@ class WellDatasetCtrls:
 
     def partition_dataset(self, sliced_dataset):
         """
-        划分数据集，随机91开
+        划分数据集
         :param sliced_dataset:
-        :return: 划分好的数据集
+        :return:
         """
         train_sliced_dataset = {}
         val_sliced_dataset = {}
@@ -648,10 +637,10 @@ class WellDatasetCtrls:
 
     def save_dataset2h5(self, file_stem, sliced_dataset):
         """
-        保存处理好的数据集到h5文件中
+        保存数据集到h5文件中
         :param file_stem:
         :param sliced_dataset:
-        :return: 无返回
+        :return:
         """
         # 测试路径
         dir_path = pathlib.Path(self.output_dir)
@@ -664,7 +653,7 @@ class WellDatasetCtrls:
             h5_file.attrs["slice_length"] = self.slice_length
             h5_file.attrs["slice_step"] = self.slice_step
             h5_file.attrs["proc_info"] = json.dumps(self.proc_info)
-            h5_file.attrs["label_name"] = self.label_name
+            h5_file.attrs["label_name"] = self.label_name if self.label_name is not None else ""
 
         # 保存数据
         for i in sliced_dataset[list(sliced_dataset.keys())[0]].keys():

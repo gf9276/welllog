@@ -26,7 +26,7 @@ def parse_args():
     :return:
     """
     parser = argparse.ArgumentParser(description='处理样本集')
-    parser.add_argument('--json', default="Data/宋芳屯/宋芳屯储层划分06/宋芳屯储层划分06_pretreatment.json",
+    parser.add_argument('--json', default="定边/定边预探井130_全井段_地质分层20230725/pre_proc.json",
                         help='json文件的路径')
     parser.add_argument('--draw_plt', default="True", help='是否绘图')
     args = parser.parse_args()
@@ -102,7 +102,7 @@ class WellDatasetCtrls:
         self.json_cfg_filepath = json_cfg_filepath
         self.draw_plt = draw_plt
         self.cfg_param = read_json(json_cfg_filepath)  # 读取配置
-        self.proc_nbr = cpu_count() // 4 # 全速前进！
+        self.proc_nbr = cpu_count()  # 全速前进！
 
         # ----------------------------------------------------------这些都是具体的配置---------------------------------------------------------
         # 切片长度，默认为1
@@ -154,6 +154,8 @@ class WellDatasetCtrls:
         self.proc_method = "train"
         if "proc_method" in self.cfg_param.keys():
             self.proc_method = self.cfg_param["proc_method"]
+
+        self.label_exist = False
         if self.label_name is None:
             self.proc_method = "test"
         if self.proc_method == "test":
@@ -184,6 +186,8 @@ class WellDatasetCtrls:
             return
         for well_name in sliced_dataset.keys():
             label = sliced_dataset[well_name]["label"]
+            if label is None:
+                return
             values, cnt = np.unique(label, return_counts=True)
             # 少，才能画直方图
             if len(cnt) < 50:
@@ -267,6 +271,9 @@ class WellDatasetCtrls:
                                                                                                         1)  # 变成二维后面好拼接
                     dataset[well_name][key][np.isnan(dataset[well_name][key])] = -99999  # 非法值直接变成-99999
                     dataset[well_name][key][np.isinf(dataset[well_name][key])] = -99999  # 非法值直接变成-99999
+            # 读完之后再判断是否存在标签，默认所有井情况一样
+            if self.label_name is not None and self.label_name in dataset[well_name]:
+                self.label_exist = True
         dataset_file.close()
         return dataset
 
@@ -292,7 +299,7 @@ class WellDatasetCtrls:
 
             # --------------------------------------------合并所有数据，前面n列是特征，最后一列是标签-------------------------------------------
             features = np.concatenate(tuple(a_well_dataset[key] for key in self.features_name), 1)
-            if self.label_name is not None:
+            if self.label_name is not None and self.label_exist:
                 label = a_well_dataset[self.label_name]
                 features_and_labels = np.concatenate((features, label), 1)
             else:
@@ -352,7 +359,7 @@ class WellDatasetCtrls:
                 if key in self.features_name:
                     # 检索具体处理内容
                     key_idx = self.features_name.index(key)
-                elif self.label_name is not None and key == self.label_name:
+                elif self.label_name is not None and key == self.label_name and self.label_exist:
                     key_idx = len(self.features_name)  # 只有一个标签，当然是最后一个了
 
                 # 开始处理
@@ -435,7 +442,7 @@ class WellDatasetCtrls:
                 merged_dataset[well_name][cur_idx: cur_idx + self.slice_length, 0:len(self.features_name)], axis=0)
             sliced_features_list.append(cur_feature)
 
-            if self.label_name is not None:
+            if self.label_name is not None and self.label_exist:
                 # ----------------------------------------------------------获取每个切片的单个标签---------------------------------------------------------
                 if self.label_type == "mode":
                     mode_label_list = []  # 众数 --> mode，我也很奇怪，众数的英文居然是mode
@@ -499,7 +506,7 @@ class WellDatasetCtrls:
         :return:
         """
         # ----------------------------------------------------------是否保留异常值---------------------------------------------------------
-        if self.keep_outlier_label is False and self.label_name is not None:
+        if self.keep_outlier_label is False and self.label_name is not None and self.label_exist:
             for well_name in list(sliced_dataset.keys()):
                 normal_value_idx = np.zeros((sliced_dataset[well_name]["label"].shape[0])) != 0  # 生成一坨false
                 for i in range(sliced_dataset[well_name]["label"].shape[1]):
@@ -646,7 +653,7 @@ class WellDatasetCtrls:
             h5_file.attrs["slice_length"] = self.slice_length
             h5_file.attrs["slice_step"] = self.slice_step
             h5_file.attrs["proc_info"] = json.dumps(self.proc_info)
-            h5_file.attrs["label_name"] = self.label_name
+            h5_file.attrs["label_name"] = self.label_name if self.label_name is not None else ""
 
         # 保存数据
         for i in sliced_dataset[list(sliced_dataset.keys())[0]].keys():
