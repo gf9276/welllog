@@ -26,9 +26,9 @@ def parse_args():
     :return:
     """
     parser = argparse.ArgumentParser(description='处理样本集')
-    parser.add_argument('--json', default="定边/定边预探井130_全井段_地质分层20230725/pre_proc.json",
+    parser.add_argument('--json', default="Data/宋芳屯/宋芳屯油气识别06/宋芳屯油气识别06_pretreatment.json",
                         help='json文件的路径')
-    parser.add_argument('--draw_plt', default="True", help='是否绘图')
+    parser.add_argument('--draw_plt', default=False, type=bool, help='是否绘图')
     args = parser.parse_args()
     return args
 
@@ -467,7 +467,7 @@ class WellDatasetCtrls:
 
                 # ----------------------------------------------------------获取每个切片是否存在异常值---------------------------------------------------------
                 cur_outlier = (merged_dataset_outlier[well_name][cur_idx: cur_idx + self.slice_length]).sum() > (
-                            self.slice_length // 10)
+                        self.slice_length // 10)
                 sliced_outlier_list.append(np.asarray(cur_outlier).reshape(-1))  # 异常值大于指定行数，我就认为你是异常切片
 
             # ----------------------------------------------------------刷新步长---------------------------------------------------------
@@ -666,5 +666,5 @@ if __name__ == "__main__":
     my_args = parse_args()
     json_filepath = my_args.json
     print("\nHi, {}".format(json_filepath))
-    my_dataset_ctrl = WellDatasetCtrls(json_filepath, (my_args.draw_plt == "True"))
+    my_dataset_ctrl = WellDatasetCtrls(json_filepath, (my_args.draw_plt == True))
     my_dataset_ctrl.proc_dataset()
