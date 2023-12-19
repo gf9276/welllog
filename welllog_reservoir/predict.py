@@ -84,6 +84,7 @@ def main(args):
     gpu_id = args.gpu_id
     median_filter_size = int(args.median_filter_size)
     device = torch.device('cuda:' + gpu_id if torch.cuda.is_available() else 'cpu')
+    num_workers = cpu_count() // 4 if sys.platform.startswith('linux') else 0
     # 导入模型文件
     x = import_module(cfg)
     batch_size = x.batchsize
@@ -116,7 +117,7 @@ def main(args):
             test_filepath,
             label_classes,
             batch_size * 8,  # 我已经全速前进了
-            num_workers=cpu_count() // 4,
+            num_workers=num_workers,
             shuffle=False,
             which_wells=[well_name])
         if test_dataset.have_label:

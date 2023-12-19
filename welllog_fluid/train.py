@@ -102,6 +102,7 @@ def main(args):
     draw_plt = args.draw_plt
     gpu_id = args.gpu_id
     device = torch.device('cuda:' + gpu_id if torch.cuda.is_available() else 'cpu')
+    num_workers = cpu_count() // 4 if sys.platform.startswith('linux') else 0
     # 02 获取模型配置文件里的参数, 与模型有关的训练参数
     x = import_module(cfg)
     epoch_nbr = x.epoch
@@ -112,13 +113,13 @@ def main(args):
         train_h5filepath,
         label_classes,
         batch_size,
-        num_workers=cpu_count() // 4,
+        num_workers=num_workers,
         shuffle=True)
     val_dataset, val_loader = setup_dataloaders(
         val_h5filepath,
         label_classes,
         batch_size,
-        num_workers=cpu_count() // 4,
+        num_workers=num_workers,
         shuffle=False)
     # ---------------O(∩_∩)O--------------- 成功第四步，加载模型（if need） ------------------------------
     net = x.Net()

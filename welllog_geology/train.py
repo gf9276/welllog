@@ -32,8 +32,8 @@ def parse_args():
     # 文件和路径相关
     parser.add_argument('--logging_filepath', default="./Log/Train/logging.json", help='日志文件路径')
     parser.add_argument('--model_save_path', default="./Log/Train/output.pth", help='模型文件保存路径')
-    parser.add_argument('--train_filepath', default="./Data/train.h5", help='训练集路径')
-    parser.add_argument('--val_filepath', default="./Data/test.h5", help='验证集路径')
+    parser.add_argument('--train_filepath', default="Data/定边/定边预探井130_全井段_地质分层20230725/train.h5", help='训练集路径')
+    parser.add_argument('--val_filepath', default="Data/定边/定边预探井130_全井段_地质分层20230725/test.h5", help='验证集路径')
     # 一些开关
     parser.add_argument('--pretrained', default="True", help='是否要预训练')
     parser.add_argument('--checkpoint', default='./Log/Train/output.pth', help='模型权重路径')
@@ -115,6 +115,7 @@ def main(args):
     draw_plt = args.draw_plt
     gpu_id = args.gpu_id
     device = torch.device('cuda:' + gpu_id if torch.cuda.is_available() else 'cpu')
+    num_workers = cpu_count() // 4 if sys.platform.startswith('linux') else 0
     # 02 获取模型配置文件里的参数, 与模型有关的训练参数
     x = import_module(cfg)
     epoch_nbr = x.epoch
@@ -125,13 +126,13 @@ def main(args):
         train_h5filepath,
         label_classes,
         batch_size,
-        num_workers=cpu_count() // 4,
+        num_workers=num_workers,
         shuffle=True)
     val_dataset, val_loader = setup_dataloaders(
         val_h5filepath,
         label_classes,
         batch_size,
-        num_workers=cpu_count() // 4,
+        num_workers=num_workers,
         shuffle=False)
     # ---------------O(∩_∩)O--------------- 成功第四步，加载模型（if need） ------------------------------
     net = x.Net()

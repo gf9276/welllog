@@ -22,9 +22,9 @@ from Utils.math_handler import median_filter_in_torch
 def parse_args():
     parser = argparse.ArgumentParser(description='Test a model')
     # 文件和路径相关
-    parser.add_argument('--config', default='SENet_Geology', help='模型配置文件路径')
+    parser.add_argument('--config', default='LSTM_Geology', help='模型配置文件路径')
     parser.add_argument('--logging_filepath', default='./Log/Predict/logging.json', help='保存结果的json')
-    parser.add_argument('--test_filepath', default='./Data/test.h5', help='测试集路径')
+    parser.add_argument('--test_filepath', default='Data/定边/定边预探井130_全井段_地质分层20230725/test.h5', help='测试集路径')
     parser.add_argument('--checkpoint', default='./Log/Train/output.pth', help='模型权重路径')
     # 一些开关
     parser.add_argument('--draw_plt', default="True", help='是否绘图')
@@ -102,6 +102,7 @@ def main(args):
     gpu_id = args.gpu_id
     median_filter_size = int(args.median_filter_size)
     device = torch.device('cuda:' + gpu_id if torch.cuda.is_available() else 'cpu')
+    num_workers = cpu_count() // 4 if sys.platform.startswith('linux') else 0
     # 导入模型文件
     x = import_module(cfg)
     batch_size = x.batchsize
@@ -134,7 +135,7 @@ def main(args):
             test_filepath,
             label_classes,
             batch_size * 8,  # 我已经全速前进了
-            num_workers=cpu_count() // 4,
+            num_workers=num_workers,
             shuffle=False,
             which_wells=[well_name])
         if test_dataset.have_label:
