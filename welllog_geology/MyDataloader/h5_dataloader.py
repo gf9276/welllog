@@ -40,76 +40,61 @@ class MyDataSet(Dataset):
         # 注意string和int的变化
 
         # a-->b b-->a
-        self.label_classes = [int(float(x)) for x in label_classes]  # 先float再int当然是为了保险。。。
-        self.label_classes_dict = dict(zip(self.label_classes, list(range(len(self.label_classes)))))
-        self.label_classes_reversal_dict = dict(zip(list(range(len(self.label_classes))), self.label_classes))
-        self.h5filepath = h5filepath
-        self.noise = noise
-        self.have_label = True
+        self.label_classes = [int(float(x)) for x in label_classes]  # 先float再int当然是防止输入的标签带小数点
+        self.label_classes_dict = dict(zip(self.label_classes, list(range(len(self.label_classes)))))  # 标签转换字典
+        self.label_classes_reversal_dict = dict(zip(list(range(len(self.label_classes))), self.label_classes))  # 标签反过来转换的字典
+        self.h5filepath = h5filepath  # 文件路径
+        self.noise = noise  # 是否加噪声
+        self.have_label = True  # 数据集里是否有标签
 
         self.label_classes_nbr = len(self.label_classes_dict)  # 标签数量
 
-        # 直接全部加载到内存里，其实可以在__getitem__里面重新打开文件，会不会起冲突我就不知道了，没试过
-        self.dataset = {}
         self.wells_name = []  # 保存井次信息 --> 必须list，python里的dict貌似没有顺序，新版本可能有
         self.wells_size = []  # 保存每个wells对应的长度
 
-        self.features_h5file = h5py.File(h5filepath, "r")
-        self.slice_length = self.features_h5file.attrs["slice_length"]
-        self.slice_step = self.features_h5file.attrs["slice_step"]
-        all_well_features = []
-        all_well_label = []
-        all_well_multi_label = []
-        for well_name in self.features_h5file.keys():
-            if which_wells is not None and well_name not in which_wells:
-                continue
-            self.wells_name.append(well_name)
-            self.wells_size.append(len(self.features_h5file[well_name]["features"][:]))
+        with h5py.File(self.h5filepath, "r") as features_h5file:
+            self.slice_length = features_h5file.attrs["slice_length"]
+            self.slice_step = features_h5file.attrs["slice_step"]
 
-            # 按照float32的格式读取
-            all_well_features.append(self.features_h5file[well_name]["features"][:].astype("float32"))
-            if "label" in self.features_h5file[well_name].keys() and "multi_label" in self.features_h5file[well_name].keys():
-                all_well_label.append(self.features_h5file[well_name]["label"][:].astype("int64"))
-                all_well_multi_label.append(self.features_h5file[well_name]["multi_label"][:].astype("int64"))
-                self.have_label = True
-            else:
-                self.have_label = False
+            for well_name in features_h5file.keys():
+                # 是否调用这口井？
+                if which_wells is not None and well_name not in which_wells:
+                    continue
 
-        self.features_h5file.close()
+                # 记录井名字和数据数量
+                self.wells_name.append(well_name)  # 记录井的名字
+                self.wells_size.append(len(features_h5file[well_name]["features"][:]))  # 记录每口井数据的大小
 
-        self.dataset["features"] = np.concatenate(tuple(all_well_features), 0)
-        if self.have_label:
-            # 转成我们要的数字
-            self.dataset["label"] = transform_label(np.concatenate(tuple(all_well_label), 0), self.label_classes_dict)
-            self.dataset["multi_label"] = transform_label(np.concatenate(tuple(all_well_multi_label), 0), self.label_classes_dict)
-
-        self.features_nbr = self.dataset["features"].shape[2]
-        self.slice_length = self.dataset["features"].shape[1]
-
-        self.features_mean = np.mean(self.dataset["features"].reshape(-1, self.features_nbr), axis=0)
-        self.features_std = np.std(self.dataset["features"].reshape(-1, self.features_nbr), axis=0)
+                # 验证数据集中是否都有标签
+                if "label" in features_h5file[well_name].keys() and "multi_label" in features_h5file[well_name].keys():
+                    self.have_label = True
+                else:
+                    self.have_label = False
 
     def __len__(self):
         # 返回数据集长度
-        return len(self.dataset["features"])
+        return sum(self.wells_size)
 
     def __getitem__(self, idx):
         """
         原来聪明的dataloader，会自动转化为tensor，那我就不多此一举了
         """
-        features = np.copy(self.dataset["features"][idx])
-        if self.noise:
-            # 这个加噪声的方式有问题，所以先不加
-            for i in range(self.features_nbr):
-                noise = 0.1 * np.random.normal(loc=self.features_mean[i], scale=self.features_std[i], size=features[:, i].shape)
-                features[:, i] += noise
+        data_idx = self.get_data_well(idx)
+        well_name = data_idx["well"]
+        well_idx = data_idx["idx"]
+        output = {}
 
-        if self.have_label:
-            label = self.dataset["label"][idx].squeeze()
-            multi_label = self.dataset["multi_label"][idx].squeeze()
-            return {"features": features, "label": label, "multi_label": multi_label, **self.get_data_well(idx)}
-        else:
-            return {"features": features, **self.get_data_well(idx)}
+        with h5py.File(self.h5filepath, "r") as features_h5file:
+            output["features"] = features_h5file[well_name]["features"][well_idx].astype("float32")  # 读取这个特征
+
+            # 有标签就加上标签
+            if self.have_label:
+                ori_label = features_h5file[well_name]["label"][well_idx].astype("int64").squeeze()
+                output["label"] = transform_label(ori_label, self.label_classes_dict)
+                ori_multi_label = features_h5file[well_name]["multi_label"][well_idx].astype("int64").squeeze()
+                output["multi_label"] = transform_label(ori_multi_label, self.label_classes_dict)
+
+        return {**output, **self.get_data_well(idx)}
 
     def get_data_well(self, idx):
         """
