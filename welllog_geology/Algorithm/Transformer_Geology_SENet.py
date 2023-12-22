@@ -6,10 +6,12 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+from Algorithm.SENet_Geology_Transformer_base import SENet18
+
 # training config
 slicelength = 97
-epoch = 100
-batchsize = 1024
+epoch = 400
+batchsize = 256
 learningrate = 0.001
 lossfunc = 0
 
@@ -321,6 +323,19 @@ class EmbeddingsLiner(nn.Module):
         self.layer1 = nn.Sequential(nn.Linear(h_in, h_out), nn.ReLU(True))
         self.layer2 = nn.Sequential(nn.Linear(h_out, h_out), nn.ReLU(True))
         self.layer3 = nn.Sequential(nn.Linear(h_out, h_out))
+
+        # 加载预训练参数
+        self.se_layer = SENet18()
+        pretrained_filepath = "Log/Train/定边预探井130_SENet/output.pth"
+        loaded_model = torch.load(pretrained_filepath, map_location=torch.device("cpu"))
+        net_dict = self.se_layer.state_dict()
+
+        # 直接判断同名model的尺寸是否一样就可以了，不一样的不加载
+        pretrained_dict = {k: v for k, v in loaded_model.items() if k in net_dict and net_dict[k].shape == v.shape}
+
+        net_dict.update(pretrained_dict)  # 更新一下。。
+        self.se_layer.load_state_dict(net_dict, strict=False)
+
         self.h_out = h_out
 
     def forward(self, x):
@@ -330,11 +345,19 @@ class EmbeddingsLiner(nn.Module):
         # return F.normalize(self.liner(x), 2, dim=2) * math.sqrt(self.h_out)  # L2归一化一下
 
         # 现在的 -----------------
-        x = self.layer1(x)
-        x = self.layer2(x)
-        x = self.layer3(x)
+        # x = self.layer1(x)
+        # x = self.layer2(x)
+        # x = self.layer3(x)
+        # return x
+
+        # 现在的
+        cur_batch_size = x.shape[0]
+        x = x.reshape(x.size()[0], x.size()[1], -1, features_num)
+        x = torch.swapaxes(x, 2, 3)
+        x = x.reshape(-1, x.size()[2], x.size()[3])
+        x = self.se_layer(x)
+        x = x.reshape(cur_batch_size, -1, self.h_out)
         return x
-        # return F.normalize(x, 2, dim=2) * math.sqrt(self.h_out)  # L2归一化一下
 
         # return self.liner(x)  # L2归一化一下
         # (F.normalize(self.liner(x),2,dim=2)[1,1]**2).sum()

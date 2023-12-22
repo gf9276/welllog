@@ -28,18 +28,18 @@ def parse_args():
     """
     parser = argparse.ArgumentParser(description='Train a model')
     # 模型配置文件
-    parser.add_argument('--config', default="Transformer_Geology", help='模型的名字')
+    parser.add_argument('--config', default="SENet_Geology", help='模型的名字')
     # 文件和路径相关
-    parser.add_argument('--logging_filepath', default="./Log/Train/logging.json", help='日志文件路径')
-    parser.add_argument('--model_save_path', default="./Log/Train/output.pth", help='模型文件保存路径')
+    parser.add_argument('--logging_filepath', default="./Log/Train/定边预探井130_SENet/logging.json", help='日志文件路径')
+    parser.add_argument('--model_save_path', default="./Log/Train/定边预探井130_SENet/output.pth", help='模型文件保存路径')
     parser.add_argument('--train_filepath', default="Data/定边/定边预探井130_全井段_地质分层20230725/train.h5", help='训练集路径')
-    parser.add_argument('--val_filepath', default="Data/定边/定边预探井130_全井段_地质分层20230725/test.h5", help='验证集路径')
+    parser.add_argument('--val_filepath', default="Data/定边/定边预探井130_全井段_地质分层20230725/val.h5", help='验证集路径')
     # 一些开关
-    parser.add_argument('--pretrained', default="True", help='是否要预训练')
+    parser.add_argument('--pretrained', default="False", help='是否要预训练')
     parser.add_argument('--checkpoint', default='./Log/Train/output.pth', help='模型权重路径')
     parser.add_argument('--draw_plt', default="True", help='是否绘图')
     # 其他
-    parser.add_argument('--gpu_id', default="0", help='gpu_id')
+    parser.add_argument('--gpu_id', default="2", help='gpu_id')
 
     args = parser.parse_args()
     return args

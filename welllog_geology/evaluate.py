@@ -18,12 +18,17 @@ def common_forward(net, batch, criterion):
         cur_device = next(net.parameters()).device
         this_batch = sample_to_device(batch, cur_device)
         features = this_batch["features"]
+        features = features.reshape(features.size()[0], -1, 24 * features.shape[2])
         transformer_batch = net.get_batch(features, None, 926219)
-        label = this_batch["label"].long()
+        multi_label = this_batch["multi_label"]
+        multi_label = multi_label.reshape(multi_label.size()[0], -1, 24)
+        multi_label = multi_label[:, :, multi_label.shape[2] // 2].long()
 
         output = net.forward(src=transformer_batch.src, src_mask=transformer_batch.src_mask, just_encoder=True)
-        output = output[:, output.shape[1] // 2, :]  # 我懒，直接取中间值得了
-        loss = criterion(output, label)
+        # output = output[:, output.shape[1] // 2, :]  # 我懒，直接取中间值得了
+        multi_label = multi_label.reshape(-1)
+        output = output.reshape(-1, output.shape[2])
+        loss = criterion(output, multi_label)
 
         _, predicted = output.max(1)  # 获取标签
 
@@ -37,8 +42,9 @@ def common_forward(net, batch, criterion):
         loss = criterion(output, label)
 
         _, predicted = output.max(1)  # 获取标签
+        multi_label = label
 
-    return loss, predicted, label
+    return loss, predicted, multi_label
 
 
 def evaluate(net, test_loader, criterion):

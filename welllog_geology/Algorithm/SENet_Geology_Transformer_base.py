@@ -9,7 +9,7 @@ import torch.nn.functional as F
 
 # training config
 slicelength = 97
-epoch = 300
+epoch = 2
 batchsize = 1024
 learningrate = 0.002
 lossfunc = 0
@@ -148,7 +148,6 @@ class SENet(nn.Module):
         # out = F.avg_pool1d(out, 4)
         out = F.adaptive_avg_pool1d(out, 1)  # 改成自适应
         out = out.view(out.size(0), -1)
-        out = self.linear(out)
         return out
 
 
