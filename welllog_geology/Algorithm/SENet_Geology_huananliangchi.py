@@ -8,8 +8,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 # training config
-slicelength = 97
-epoch = 100
+slicelength = 33
+epoch = 300
 batchsize = 1024
 learningrate = 0.002
 lossfunc = 0

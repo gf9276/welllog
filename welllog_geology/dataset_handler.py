@@ -26,7 +26,7 @@ def parse_args():
     :return:
     """
     parser = argparse.ArgumentParser(description='处理样本集')
-    parser.add_argument('--json', default="Data/定边/定边预探井130_全井段_地质分层20230725/定边预探井130_全井段_地质分层20230725_pretreatment.json",
+    parser.add_argument('--json', default="Data/定边/定边预探井5_全井段_地质分层20230725/定边预探井5_全井段_地质分层20230725_pretreatment.json",
                         help='json文件的路径')
     parser.add_argument('--draw_plt', default=False, type=bool, help='是否绘图')
     args = parser.parse_args()

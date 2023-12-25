@@ -6,7 +6,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from Algorithm.SENet_Geology_Transformer_base import SENet18
+from Algorithm.SENet_Geology_Transformer_base_huananliangchi import SENet18
 
 # training config
 slicelength = 33
@@ -16,10 +16,31 @@ learningrate = 0.0001
 lossfunc = 0
 
 # network config
-featurenum = 6
-label = ['34', '19', '3', '4', '25', '2', '1', '0', '23', '35', '32', '33', '31', '30', '28', '29', '26', '27', '22',
-         '21', '12', '13', '14', '15', '16', '17',
-         '18', '24', '11', '20', '5', '6', '7', '8', '9', '10']
+featurenum = 13
+label = ["27",
+         "13",
+         "14",
+         "11",
+         "8",
+         "7",
+         "6",
+         "28",
+         "38",
+         "29",
+         "30",
+         "33",
+         "34",
+         "35",
+         "36",
+         "37",
+         "26",
+         "17",
+         "18",
+         "21",
+         "22",
+         "23",
+         "24",
+         "25"]
 
 # -------- Do not delete this line, the configuration ends here. --------
 
@@ -328,7 +349,7 @@ class EmbeddingsLiner(nn.Module):
 
         # 加载预训练参数
         self.se_layer = SENet18()
-        pretrained_filepath = "Log/Train/定边预探井130_SENet_33/output.pth"
+        pretrained_filepath = "Log/Train/SENet_Geology_huananliangchi_33/output.pth"
         loaded_model = torch.load(pretrained_filepath, map_location=torch.device("cpu"))
         net_dict = self.se_layer.state_dict()
 

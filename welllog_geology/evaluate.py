@@ -18,10 +18,10 @@ def common_forward(net, batch, criterion):
         cur_device = next(net.parameters()).device
         this_batch = sample_to_device(batch, cur_device)
         features = this_batch["features"]
-        features = features.reshape(features.size()[0], -1, 24 * features.shape[2])
+        features = features.reshape(features.size()[0], -1, net.patch_height * features.shape[2])
         transformer_batch = net.get_batch(features, None, 926219)
         multi_label = this_batch["multi_label"]
-        multi_label = multi_label.reshape(multi_label.size()[0], -1, 24)
+        multi_label = multi_label.reshape(multi_label.size()[0], -1, net.patch_height)
         multi_label = multi_label[:, :, multi_label.shape[2] // 2].long()
 
         output = net.forward(src=transformer_batch.src, src_mask=transformer_batch.src_mask, just_encoder=True)

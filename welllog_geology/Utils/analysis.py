@@ -74,8 +74,13 @@ def make_confusion_matrix(predicted, gth, label_classes_nbr):
     :return: conf_matrix 混淆矩阵
     """
     conf_matrix = torch.zeros(label_classes_nbr, label_classes_nbr)
-    for y, x in zip(predicted, gth):
-        conf_matrix[y, x] += 1
+    for i in range(label_classes_nbr):
+        for j in range(label_classes_nbr):
+            conf_matrix[i, j] = torch.logical_and(predicted == i, gth == j).sum()
+
+    # 这个太浪费时间了
+    # for y, x in zip(predicted, gth):
+    #     conf_matrix[y, x] += 1
 
     return conf_matrix.cpu().numpy()
 

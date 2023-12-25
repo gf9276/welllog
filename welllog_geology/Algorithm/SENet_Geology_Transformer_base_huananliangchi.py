@@ -8,16 +8,38 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 # training config
-slicelength = 33
-epoch = 300
+slicelength = 97
+epoch = 2
 batchsize = 1024
 learningrate = 0.002
 lossfunc = 0
 
 # network config
-featurenum = 6
-label = ['34', '19', '3', '4', '25', '2', '1', '0', '23', '35', '32', '33', '31', '30', '28', '29', '26', '27', '22',
-         '21', '12', '13', '14', '15', '16', '17', '18', '24', '11', '20', '5', '6', '7', '8', '9', '10']
+featurenum = 13
+label = ["27",
+         "13",
+         "14",
+         "11",
+         "8",
+         "7",
+         "6",
+         "28",
+         "38",
+         "29",
+         "30",
+         "33",
+         "34",
+         "35",
+         "36",
+         "37",
+         "26",
+         "17",
+         "18",
+         "21",
+         "22",
+         "23",
+         "24",
+         "25"]
 
 # -------- Do not delete this line, the configuration ends here. --------
 
@@ -148,7 +170,6 @@ class SENet(nn.Module):
         # out = F.avg_pool1d(out, 4)
         out = F.adaptive_avg_pool1d(out, 1)  # 改成自适应
         out = out.view(out.size(0), -1)
-        out = self.linear(out)
         return out
 
 
